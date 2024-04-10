@@ -1,8 +1,10 @@
-version: '3'
+version: '3.8'
 
 services:
   postgres:
-    image: postgres:latest
+    build:
+      context: ./postgres_db
+      dockerfile: Dockerfile
     container_name: postgres_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB_NAME}
@@ -11,17 +13,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./data:/var/lib/postgresql/data
-
-  postgres-queries:
-    build: ./postgres-queries
-    container_name: postgres_queries
-    depends_on:
-      - postgres
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_DB_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
-    ports:
-      - "8000:8000"
+      - postgres-data:/var/lib/postgresql/data
+volumes:
+  postgres-data:

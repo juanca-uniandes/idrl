@@ -1,25 +1,3 @@
-import os
-import psycopg2
-
-# Obtener las variables de entorno
-DB_NAME = os.getenv("POSTGRES_DB")
-DB_USER = os.getenv("POSTGRES_USER")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = os.getenv("POSTGRES_HOST")
-
-# Conexión a la base de datos
-connection = psycopg2.connect(
-    dbname=DB_NAME,
-    user=DB_USER,
-    password=DB_PASSWORD,
-    host=DB_HOST
-)
-
-# Crear un cursor para ejecutar comandos SQL
-cursor = connection.cursor()
-
-# Definir sentencias SQL para crear tablas
-create_tables_query = """
 CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255),
@@ -58,14 +36,3 @@ CREATE TABLE IF NOT EXISTS split_videos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-"""
-
-# Ejecutar las sentencias SQL
-cursor.execute(create_tables_query)
-
-# Confirmar los cambios
-connection.commit()
-
-# Cerrar la conexión y el cursor
-cursor.close()
-connection.close()
