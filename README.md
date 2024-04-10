@@ -3,10 +3,10 @@
 Las credenciales de la base de datos se encuentran en el archivo `.env`. Estas variables están diseñadas para ser reutilizadas rápidamente entre los distintos contenedores que las requieran.
 
 **Diagrama de bases de datos actual**
-![Diagrama base de datos actual](img.png)
+![Diagrama base de datos actual](imgs/img.png)
 
 **Diagrama arquitectura**
-![Diagrama arquitectura propuesta](..%2F..%2FDownloads%2FUntitled%20Diagram.drawio%20%281%29.png)
+![Diagrama arquitectura](imgs%2FUntitled%20Diagram.drawio%20%281%29.png)
 
 **Uso:**
 
