@@ -2,6 +2,9 @@
 
 Las credenciales de la base de datos se encuentran en el archivo `.env`. Estas variables están diseñadas para ser reutilizadas rápidamente entre los distintos contenedores que las requieran.
 
+**Diagrama de bases de datos actual**
+![img.png](img.png)
+
 **Uso:**
 
 - Ejecutar este comando para cargar las variables desde el archivo `.env` y levantar el docker compose: `docker-compose --env-file .env up`
