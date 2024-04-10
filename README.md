@@ -14,6 +14,7 @@ Las credenciales de la base de datos se encuentran en el archivo `.env`. Estas v
 **Info de contenedores:**
 
 - **postgres:** Contenedor para la base de datos de PostgreSQL.
-- **postgres-queries:** Contenedor que ejecuta queries para las tablas de la base de datos.
+- **postgres-queries:** Contenedor que ejecuta scripts para la creación de las tablas de la base de datos.
+
 
 
