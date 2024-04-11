@@ -10,13 +10,18 @@ UPLOAD_FOLDER = 'videos/uploads'
 UPLOAD_FOLDER_TO_PROCESSED_VIDEOS = 'videos/processed'
 ALLOWED_EXTENSIONS = {'mp4'}
 
-# Configuración de la conexión a la base de datos PostgreSQL
+# Obtener las variables de entorno
+DB_NAME = os.getenv("POSTGRES_DB")
+DB_USER = os.getenv("POSTGRES_USER")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_HOST = os.getenv("POSTGRES_HOST")
+
+# Conexión a la base de datos
 conn = psycopg2.connect(
-    dbname='database_name',
-    user='username',
-    password='password',
-    host='host',
-    port='port'
+    dbname=DB_NAME,
+    user=DB_USER,
+    password=DB_PASSWORD,
+    host=DB_HOST
 )
 
 # Path to the logo image
@@ -30,10 +35,8 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def shorten_video_duration(video_clip):
-    if video_clip.duration > 20:
-        return video_clip.subclip(0, 20)
-    return video_clip
+def shorten_video_duration(video_clip, start, end):
+    return video_clip.subclip(start, end)
 
 
 def add_logo_to_video(video_clip):
@@ -60,13 +63,33 @@ def process_video(file):
     file.save(file_path)
 
     original_video = VideoFileClip(file_path)
-    # TODO Enviar split videos al contendor files e ir enviando cada split a la base de datos (JUAN)
-    processed_video = shorten_video_duration(original_video)
-    processed_video = add_logo_to_video(processed_video)
-    processed_video = resize_video_to_16_9(processed_video)
-    # TODO notificar en base de datos que el video fue procesado completamente (JUAN)
+    total_duration = original_video.duration
+    start_time = 0
 
-    return save_processed_video(processed_video, filename)
+    if total_duration <= 20:
+        # Procesar el video completo
+        processed_video = shorten_video_duration(original_video, 0, total_duration)
+        processed_video = add_logo_to_video(processed_video)
+        processed_video = resize_video_to_16_9(processed_video)
+        # TODO notificar en base de datos que el video fue procesado completamente (JUAN)
+        save_processed_video(processed_video, filename)
+    else:
+        # Procesar por partes
+        for i in range(0, int(total_duration), 20):
+            processed_clip = shorten_video_duration(original_video, start_time, start_time + 20)
+            processed_clip = add_logo_to_video(processed_clip)
+            processed_clip = resize_video_to_16_9(processed_clip)
+
+            # Generate filename with start time
+            clip_filename = os.path.splitext(filename)[0] + f'_part_{start_time}.mp4'
+
+            # TODO notificar en base de datos que el video fue procesado completamente (JUAN)
+            save_processed_video(processed_clip, clip_filename)
+
+            # Increment start_time
+            start_time += 20
+
+    return True
 
 # def executeQuery(query, params):
 #     cursor = conn.cursor()
@@ -88,8 +111,8 @@ def upload_file():
         if file.filename == '':
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            processed_video_path = process_video(file)
-            return render_template('success.html', filename=os.path.basename(processed_video_path))
+            process_video(file)
+            return render_template('success.html')
     return '''
     <!doctype html>
     <title>Upload new File</title>
