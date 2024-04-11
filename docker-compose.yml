@@ -26,6 +26,31 @@ services:
     ports:
       - "8000:8000"
 
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+  worker:
+    build:
+      context: ./video-mgmt
+    command: celery -A tasks worker --loglevel=info
+    volumes:
+      - ./video-mgmt:/app
+    depends_on:
+      - redis
+      - postgres
+  video-mgmt:
+    build:
+      context: ./video-mgmt
+    command: python app.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./video-mgmt:/app
+    depends_on:
+      - redis
+      - postgres
+
   video-processing:
     build: ./video-processing
     container_name: video_processing

@@ -58,6 +58,11 @@ CREATE TABLE IF NOT EXISTS split_videos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+--------------------------------------------------------------
+--Usuario de prueba
+INSERT INTO public.usuarios
+(id, username, email, pass, created_at, updated_at)
+VALUES(1, 'usuario1', 'usuario1@gmail.com', '12345', '2024-04-10', '2024-04-10');
 """
 
 # Ejecutar las sentencias SQL
