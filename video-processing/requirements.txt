@@ -6,3 +6,4 @@ ffmpeg-python
 ffmpeg
 opencv-python
 opencv-python-headless
+psycopg2
