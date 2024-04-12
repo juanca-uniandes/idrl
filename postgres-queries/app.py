@@ -9,10 +9,10 @@ DB_HOST = os.getenv("POSTGRES_HOST")
 
 # Conexión a la base de datos
 connection = psycopg2.connect(
-    dbname=DB_NAME,
-    user=DB_USER,
-    password=DB_PASSWORD,
-    host=DB_HOST
+    dbname="idrl_db",
+    user="idrl_user",
+    password="idrl_2024",
+    host="postgres"
 )
 
 # Crear un cursor para ejecutar comandos SQL
@@ -38,7 +38,9 @@ CREATE TABLE IF NOT EXISTS videos (
     loaded_at TIMESTAMP,
     processed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    url VARCHAR(255), 
+    task_id VARCHAR(100)
 );
 
 CREATE TABLE IF NOT EXISTS processing_videos (
@@ -61,8 +63,8 @@ CREATE TABLE IF NOT EXISTS split_videos (
 --------------------------------------------------------------
 --Usuario de prueba
 INSERT INTO public.usuarios
-(id, username, email, pass, created_at, updated_at)
-VALUES(1, 'usuario1', 'usuario1@gmail.com', '12345', '2024-04-10', '2024-04-10');
+(username, email, pass, created_at, updated_at)
+VALUES('usuario1', 'usuario1@gmail.com', '12345', '2024-04-10', '2024-04-10');
 """
 
 # Ejecutar las sentencias SQL

@@ -3,7 +3,7 @@ version: '3'
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres_db
+    container_name: postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB_NAME}
       POSTGRES_USER: ${POSTGRES_DB_USER}
@@ -44,22 +44,9 @@ services:
       context: ./video-mgmt
     command: python app.py
     ports:
-      - "5000:5000"
+      - "5004:5004"
     volumes:
       - ./video-mgmt:/app
     depends_on:
       - redis
       - postgres
-
-  video-processing:
-    build: ./video-processing
-    container_name: video_processing
-    depends_on:
-      - postgres-queries
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_DB_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
-    ports:
-      - "5003:5003"

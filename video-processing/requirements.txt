@@ -1,9 +1,0 @@
-Flask
-Werkzeug
-moviepy
-Pillow==9.5.0
-ffmpeg-python
-ffmpeg
-opencv-python
-opencv-python-headless
-psycopg2
