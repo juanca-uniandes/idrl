@@ -56,6 +56,17 @@ def save_processed_video(video_clip, filename):
     video_clip.write_videofile(processed_video_path, codec='libx264', fps=24)
     return processed_video_path
 
+def getVideoFromFilesContainer():
+    pass
+
+def workerCola(): #escuchando los registros de la cola
+    #proceso en el que lee la cola
+    #1
+    #inicia el task para hacer el procesmiento del video
+    file = getVideoFromFilesContainer(path)
+    process_video(file)
+
+
 def process_video(file):
     #TODO notificar en base de datos que el video va a ser procesado (JUAN)
     filename = secure_filename(file.filename)

@@ -90,6 +90,7 @@ def insert_split_video(order_video):
 
 @app.task(bind=True)
 def process_video(self, url):
+    print(self.request.id)
     insert_video()
     for i in range(1, 6):
         insert_split_video(i)
