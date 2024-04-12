@@ -69,8 +69,7 @@ def clean_filename(filename):
     return filename
 
 
-@app.route('/upload/full', methods=['POST'])
-@token_required
+@app.route('/upload', methods=['POST'])
 def upload_full_video():
     if 'file' not in request.files:
         return 'No file part'
@@ -80,24 +79,6 @@ def upload_full_video():
     if file:
         save_video(file)
         return 'Full video uploaded successfully'
-
-
-@app.route('/upload/sliced', methods=['POST'])
-@token_required
-def upload_sliced_video():
-    if 'file' not in request.files:
-        return 'No file part'
-    file = request.files['file']
-    if file.filename == '':
-        return 'No selected file'
-    if file:
-        filename = file.filename
-        video_name = clean_filename(os.path.splitext(filename)[0])  # Limpia el nombre del archivo
-        output_folder = os.path.join(app.config['UPLOAD_FOLDER'], video_name)
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-        file.save(os.path.join(output_folder, filename))
-        return 'Sliced video uploaded successfully'
 
 
 if __name__ == '__main__':
