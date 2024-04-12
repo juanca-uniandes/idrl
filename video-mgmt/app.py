@@ -3,6 +3,7 @@ from functools import wraps
 import jwt
 import datetime
 import requests
+from tasks import app as celery_app, process_video
 
 app = Flask(__name__)
 
@@ -54,23 +55,23 @@ def index():
 @app.route('/task/start', methods=['POST'])
 @token_required
 def start():
-    url = request.json['url']
-    # Aquí puedes realizar cualquier acción que requiera la autenticación del usuario
-    # Por ejemplo, iniciar un proceso con Celery
-    return jsonify({'message': 'Task started successfully'}), 202
+    url = request.json['url']    
+    task = process_video.delay(url)
+    return jsonify({'task_id': str(task.id)}), 202
 
 
 @app.route('/task/status/<task_id>', methods=['GET'])
 @token_required
 def status(task_id):
-    # Aquí puedes verificar el estado de un proceso que requiere autenticación
-    return jsonify({'status': 'processing'}), 200
+    task = celery_app.AsyncResult(task_id)
+    return jsonify({'state': str(task.state), 'info': task.info}), 200
 
 
 @app.route('/task/abort/<task_id>', methods=['DELETE'])
 @token_required
 def abort(task_id):
-    # Aquí puedes cancelar un proceso que requiere autenticación
+    task = celery_app.AsyncResult(task_id)
+    task.revoke(terminate=True)
     return jsonify({'status': 'Task aborted!'}), 200
 
 
