@@ -3,7 +3,6 @@ from celery import Celery
 import time
 import psycopg2
 from datetime import datetime
-from werkzeug.utils import secure_filename
 import os
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip
 import requests
@@ -54,6 +53,18 @@ def process_saved_video(file_path):
     #TODO notificar en base de datos que el video va a ser procesado (JUAN)
     original_video = VideoFileClip(UPLOAD_FOLDER + '/' + file_path)
     filename = original_video.filename.replace('videos/uploads/', '')
+    selectQuery = """
+        SELECT * FROM videos WHERE video_name = ?
+    """
+    result = runQuery(selectQuery, (filename,))
+    video_info = result[0]
+    print(video_info)
+
+    insertQuery = """
+        INSERT INTO processing_videos(id_video, status, created_at, updated_at) VALUES (?, ?, ?, ?)
+    """
+    runQuery(insertQuery, (video_info['id'], 'Procesando', datetime.now(), datetime.now()))
+
     total_duration = original_video.duration
     start_time = 0
     split_counter = 0
@@ -63,8 +74,11 @@ def process_saved_video(file_path):
         processed_video = shorten_video_duration(original_video, 0, total_duration)
         processed_video = add_logo_to_video(processed_video)
         processed_video = resize_video_to_16_9(processed_video)
-        # TODO notificar en base de datos que el video fue procesado completamente (JUAN)
         save_processed_video(processed_video, filename)
+        insertQuery = """
+            INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
+        """
+        runQuery(insertQuery, (video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, 1, datetime.now(), datetime.now()))
     else:
         # Procesar por partes
         for i in range(0, int(total_duration), 20):
@@ -80,23 +94,21 @@ def process_saved_video(file_path):
 
             # Increment start_time
             start_time += 20
+            insertQuery = """
+                INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
+            """
+            runQuery(insertQuery, (
+            video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, split_counter, datetime.now(), datetime.now()))
             split_counter += 1
 
+    insertQuery = """
+        INSERT INTO processing_videos(id_video, status, created_at, updated_at) VALUES (?, ?, ?, ?)
+    """
+    runQuery(insertQuery, (video_info['id'], 'Procesado', datetime.now(), datetime.now()))
     return True
 
 
 def insert_video(task_id, url):
-    # Conexión a la base de datos 'idrl_db'
-    db_params = {
-        'dbname': "idrl_db",
-        'user': "idrl_user",
-        'password': "idrl_2024",
-        'host': "postgres"
-    }
-
-    # Create a cursor object
-    conn = psycopg2.connect(**db_params)
-    cur = conn.cursor()
 
     # Insert a record into the videos table
     insert_query = """
@@ -115,19 +127,14 @@ def insert_video(task_id, url):
         video_url = url
         task_id = task_id
 
-        cur.execute(insert_query, (video_name, path, user_id, duration, loaded_at, processed_at, video_url, task_id))
-
-        conn.commit()
-
-        cur.close()
-        conn.close()
+        runQuery(insert_query,(video_name, path, user_id, duration, loaded_at, processed_at, video_url, task_id))
 
         return video_name
     return None
 
 
-def insert_split_video(order_video):
-    # Conexión a la base de datos 'idrl_db'
+def runQuery(query, params):
+
     db_params = {
         'dbname': "idrl_db",
         'user': "idrl_user",
@@ -135,28 +142,12 @@ def insert_split_video(order_video):
         'host': "postgres"
     }
 
-    # Create a cursor object
     conn = psycopg2.connect(**db_params)
     cur = conn.cursor()
+    cur.execute(query, params)
 
-    # Insert a record into the videos table
-    insert_query = """
-        INSERT INTO split_videos (id_video, split_path, _order)
-        VALUES (%s, %s, %s)
-    """   
-
-    #Modificar el id del video, considerar id de la tarea creada
-    id_video = 1  # Assuming the video_id is 1
-    split_path = "/path/to/video/example_video.mp4"
-    order = order_video
-
-    # Execute the insert query
-    cur.execute(insert_query, (id_video, split_path, order))
-
-    # Commit the transaction
     conn.commit()
 
-    # Close cursor and connection
     cur.close()
     conn.close()
 
