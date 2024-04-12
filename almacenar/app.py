@@ -1,5 +1,7 @@
 import os
-from flask import Flask, request
+import jwt
+from functools import wraps  # Importa wraps desde functools
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 

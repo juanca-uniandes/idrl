@@ -75,6 +75,18 @@ services:
     networks:
       - network
 
+  almacenar:
+    build:
+      context: ./almacenar
+    command: python app.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./almacenar:/app
+    depends_on:
+      - video-mgmt
+    networks:
+      - network
 
   video-mgmt:
     build:
