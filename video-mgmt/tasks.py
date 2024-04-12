@@ -6,6 +6,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip
+import requests
 
 
 broker_url = 'redis://redis:6379/0'
@@ -49,15 +50,13 @@ def save_processed_video(video_clip, filename):
     return processed_video_path
 
 
-def process_video(file):
+def process_saved_video(file_path):
     #TODO notificar en base de datos que el video va a ser procesado (JUAN)
-    filename = secure_filename(file.filename)
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(file_path)
-
-    original_video = VideoFileClip(file_path)
+    original_video = VideoFileClip(UPLOAD_FOLDER + '/' + file_path)
+    filename = original_video.filename.replace('videos/uploads/', '')
     total_duration = original_video.duration
     start_time = 0
+    split_counter = 0
 
     if total_duration <= 20:
         # Procesar el video completo
@@ -74,15 +73,17 @@ def process_video(file):
             processed_clip = resize_video_to_16_9(processed_clip)
 
             # Generate filename with start time
-            clip_filename = os.path.splitext(filename)[0] + f'_part_{start_time}.mp4'
+            clip_filename = os.path.splitext(filename)[0] + f'_part_{split_counter}.mp4'
 
             # TODO notificar en base de datos que el video fue procesado completamente (JUAN)
             save_processed_video(processed_clip, clip_filename)
 
             # Increment start_time
             start_time += 20
+            split_counter += 1
 
     return True
+
 
 def insert_video(task_id, url):
     # Conexión a la base de datos 'idrl_db'
@@ -102,22 +103,28 @@ def insert_video(task_id, url):
         INSERT INTO videos (video_name, path, user_id, duration, loaded_at, processed_at, url, task_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
+    file_path = download_video_from_url(url, UPLOAD_FOLDER)
+    if file_path:
+        file = VideoFileClip(file_path)
+        video_name = file.filename.replace('videos/uploads/', '')
+        duration = file.duration
+        path = UPLOAD_FOLDER + "/" + video_name
+        user_id = 1
+        loaded_at = datetime.now()
+        processed_at = None
+        video_url = url
+        task_id = task_id
 
-    video_name = "example_video.mp4"
-    path = "/path/to/video/example_video.mp4"
-    user_id = 1  # Assuming user_id is 1
-    duration = 3600  # Duration in seconds
-    loaded_at = datetime.now()
-    processed_at = None  # Assuming the video is not processed yet
-    url = url
-    task_id = task_id
+        cur.execute(insert_query, (video_name, path, user_id, duration, loaded_at, processed_at, video_url, task_id))
 
-    cur.execute(insert_query, (video_name, path, user_id, duration, loaded_at, processed_at, url, task_id))
+        conn.commit()
 
-    conn.commit()
+        cur.close()
+        conn.close()
 
-    cur.close()
-    conn.close()
+        return video_name
+    return None
+
 
 def insert_split_video(order_video):
     # Conexión a la base de datos 'idrl_db'
@@ -154,13 +161,30 @@ def insert_split_video(order_video):
     conn.close()
 
 
+def download_video_from_url(url, destination_path):
+    try:
+        file_name = url.split('/')[-1]
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        file_name_with_timestamp = f"{timestamp}_{file_name}"
+        if not os.path.exists(destination_path):
+            os.makedirs(destination_path)
+        file_path = os.path.join(destination_path, file_name_with_timestamp)
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(file_path, 'wb') as file:
+                file.write(response.content)
+            print(f"Video downloaded successfully as '{file_name_with_timestamp}' in '{destination_path}'!")
+            return file_path
+        else:
+            print(f"Error downloading the video. Status code: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"An error occurred while downloading the video: {str(e)}")
+        return None
+
 @app.task(bind=True)
 def process_video(self, url):
     task_id = self.request.id
-    insert_video(task_id, url)
-    for i in range(1, 6):
-        insert_split_video(i)
-        time.sleep(20)
-        self.update_state(state='PROGRESS', meta={'progress': i*20})
-    #Actualizar estado de la tarea
+    file_path = insert_video(task_id, url)
+    process_saved_video(file_path)
     return {'status': 'completado!', 'result': 100}
