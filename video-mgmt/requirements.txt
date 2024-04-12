@@ -5,7 +5,6 @@ Werkzeug
 moviepy
 Pillow==9.5.0
 ffmpeg-python
-PyJWT==2.3.0
 ffmpeg
 opencv-python
 opencv-python-headless
