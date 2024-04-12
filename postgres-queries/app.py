@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS videos (
 
 CREATE TABLE IF NOT EXISTS processing_videos (
     id SERIAL PRIMARY KEY,
-    id_queue BIGINT,
+    id_task BIGINT,
     id_video INTEGER REFERENCES videos(id),  -- Cambiado el tipo de dato a INTEGER
     status VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

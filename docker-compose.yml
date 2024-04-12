@@ -16,7 +16,7 @@ services:
 
   postgres:
     image: postgres:latest
-    container_name: postgres_db
+    container_name: postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB_NAME}
       POSTGRES_USER: ${POSTGRES_DB_USER}
@@ -48,6 +48,8 @@ services:
     image: "redis:latest"
     ports:
       - "6379:6379"
+    networks:
+      - network
   worker:
     build:
       context: ./video-mgmt
@@ -93,7 +95,7 @@ services:
       context: ./video-mgmt
     command: python app.py
     ports:
-      - "5000:5000"
+      - "5004:5004"
     volumes:
       - ./video-mgmt:/app
     depends_on:
