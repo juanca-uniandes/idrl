@@ -104,7 +104,7 @@ def process_saved_video(task_id, file_path):
     insertQuery = """
         INSERT INTO processing_videos(id_task, id_video, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
     """
-    runQuery(insertQuery, (video_info['id'], 'Procesado', datetime.now(), datetime.now()))
+    runQuery(insertQuery, (task_id, video_info['id'], 'Procesado', datetime.now(), datetime.now()))
     return True
 
 
