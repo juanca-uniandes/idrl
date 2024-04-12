@@ -66,9 +66,13 @@ CREATE TABLE IF NOT EXISTS split_videos (
 --------------------------------------------------------------
 --Usuario de prueba
 
-INSERT INTO public.usuarios
-(username, email, pass, created_at, updated_at)
-VALUES('usuario1', 'admin@gmail.com', %s, '2024-04-10', '2024-04-10');
+INSERT INTO public.usuarios (username, email, pass, created_at, updated_at)
+VALUES ('usuario1', 'admin@gmail.com', %s, '2024-04-10', '2024-04-10')
+ON CONFLICT (username)
+DO UPDATE SET
+    email = EXCLUDED.email,
+    pass = EXCLUDED.pass,
+    updated_at = EXCLUDED.updated_at;
 """
 
 # Ejecutar las sentencias SQL

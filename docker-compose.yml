@@ -30,19 +30,20 @@ services:
 
 
   postgres-queries:
-    build: ./postgres-queries
-    container_name: postgres_queries
-    depends_on:
-      - postgres-db
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_DB_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
-    ports:
-      - "8000:8000"
-    networks:
-      - network
+      build: ./postgres-queries
+      container_name: postgres_queries
+      depends_on:
+        - postgres-db
+      environment:
+        POSTGRES_HOST: postgres
+        POSTGRES_DB: ${POSTGRES_DB_NAME}
+        POSTGRES_USER: ${POSTGRES_DB_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      ports:
+        - "8000:8000"
+      command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]
+      networks:
+        - network
 
   redis:
     image: "redis:latest"
