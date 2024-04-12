@@ -14,7 +14,7 @@ services:
     networks:
       - network
 
-  postgres:
+  postgres-db:
     image: postgres:latest
     container_name: postgres
     environment:
@@ -33,7 +33,7 @@ services:
     build: ./postgres-queries
     container_name: postgres_queries
     depends_on:
-      - postgres
+      - postgres-db
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_DB: ${POSTGRES_DB_NAME}
@@ -58,7 +58,7 @@ services:
       - ./video-mgmt:/app
     depends_on:
       - redis
-      - postgres
+      - postgres-db
     networks:
       - network
 
@@ -73,7 +73,7 @@ services:
       - ./autenticador:/app
     depends_on:
       - video-mgmt
-      - postgres
+      - postgres-db
     networks:
       - network
 
@@ -100,7 +100,7 @@ services:
       - ./video-mgmt:/app
     depends_on:
       - redis
-      - postgres
+      - postgres-db
     networks:
       - network
 
