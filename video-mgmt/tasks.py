@@ -21,7 +21,7 @@ DB_PORT = 5432
 UPLOAD_FOLDER = 'videos/uploads'
 UPLOAD_FOLDER_TO_PROCESSED_VIDEOS = 'videos/processed'
 ALLOWED_EXTENSIONS = {'mp4'}
-LOGO_PATH = 'logo.jpg'
+LOGO_PATH = 'logo.png'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -49,21 +49,21 @@ def save_processed_video(video_clip, filename):
     return processed_video_path
 
 
-def process_saved_video(file_path):
+def process_saved_video(task_id, file_path):
     #TODO notificar en base de datos que el video va a ser procesado (JUAN)
     original_video = VideoFileClip(UPLOAD_FOLDER + '/' + file_path)
     filename = original_video.filename.replace('videos/uploads/', '')
     selectQuery = """
-        SELECT * FROM videos WHERE video_name = ?
+        SELECT * FROM videos WHERE video_name = %s
     """
     result = runQuery(selectQuery, (filename,))
     video_info = result[0]
     print(video_info)
 
     insertQuery = """
-        INSERT INTO processing_videos(id_video, status, created_at, updated_at) VALUES (?, ?, ?, ?)
+        INSERT INTO processing_videos(id_task, id_video, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
     """
-    runQuery(insertQuery, (video_info['id'], 'Procesando', datetime.now(), datetime.now()))
+    runQuery(insertQuery, (task_id, video_info['id'], 'Procesando', datetime.now(), datetime.now()))
 
     total_duration = original_video.duration
     start_time = 0
@@ -76,7 +76,7 @@ def process_saved_video(file_path):
         processed_video = resize_video_to_16_9(processed_video)
         save_processed_video(processed_video, filename)
         insertQuery = """
-            INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
+            INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
         """
         runQuery(insertQuery, (video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, 1, datetime.now(), datetime.now()))
     else:
@@ -95,14 +95,14 @@ def process_saved_video(file_path):
             # Increment start_time
             start_time += 20
             insertQuery = """
-                INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
+                INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
             """
             runQuery(insertQuery, (
             video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, split_counter, datetime.now(), datetime.now()))
             split_counter += 1
 
     insertQuery = """
-        INSERT INTO processing_videos(id_video, status, created_at, updated_at) VALUES (?, ?, ?, ?)
+        INSERT INTO processing_videos(id_task, id_video, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
     """
     runQuery(insertQuery, (video_info['id'], 'Procesado', datetime.now(), datetime.now()))
     return True
@@ -133,8 +133,7 @@ def insert_video(task_id, url):
     return None
 
 
-def runQuery(query, params):
-
+def runQuery(query, params=None):
     db_params = {
         'dbname': "idrl_db",
         'user': "idrl_user",
@@ -144,12 +143,24 @@ def runQuery(query, params):
 
     conn = psycopg2.connect(**db_params)
     cur = conn.cursor()
-    cur.execute(query, params)
+
+    if params:
+        cur.execute(query, params)
+    else:
+        cur.execute(query)
+
+    if cur.description:
+        columns = [col[0] for col in cur.description]
+        data = [dict(zip(columns, row)) for row in cur.fetchall()]
+    else:
+        data = None
 
     conn.commit()
 
     cur.close()
     conn.close()
+
+    return data
 
 
 def download_video_from_url(url, destination_path):
@@ -177,5 +188,5 @@ def download_video_from_url(url, destination_path):
 def process_video(self, url):
     task_id = self.request.id
     file_path = insert_video(task_id, url)
-    process_saved_video(file_path)
+    process_saved_video(task_id, file_path)
     return {'status': 'completado!', 'result': 100}
