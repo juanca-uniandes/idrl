@@ -18,7 +18,7 @@
     ```bash
     docker-compose up
     ```
-
+  - Consideraciones: Si el sistema operativo es Windows cuando se creen los contenedores se debe inicializar el postgres_queries una ves para la creación de las tablas.
 - **Verificar el despliegue:**
   - Todos los endpoints que se detallan a continuación requieren el header `Content-Type: application/json`:
     1. **Registro de usuario:**
