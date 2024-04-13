@@ -1,2 +1,3 @@
 data/*
-video-mgmt/videos/*
+video-mgmt/videos/uploads/*
+video-mgmt/videos/processed/*
