@@ -63,7 +63,7 @@
       ```
 
     3. **Cargar video para procesamiento:**
-      - Realiza una solicitud POST a `http://127.0.0.1:5004/task/start` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
+      - Realiza una solicitud POST a `http://127.0.0.1:5050/task/start` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
       ```bash
       curl --location 'http://localhost:5004/task/start' \
       --header 'Content-Type: application/json' \
