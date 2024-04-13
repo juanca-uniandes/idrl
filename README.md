@@ -31,7 +31,14 @@
          }
          ```
     2. **Solicitud del token para poder hacer peticiones a los demás end-points:**
-       - Para solicitar el token, realiza una solicitud POST a `http://127.0.0.1:5050/login`, el cual te devolverá una respuesta similar a esta:
+       - Para solicitar el token, realiza una solicitud POST a `http://127.0.0.1:5050/login` con un body que contenga el email y el password. Ejemplo:
+         ```json
+         {
+             "email": "admin@gmail.com",
+             "password": "12345"
+         }
+         ```
+       - Una vez realizada la solicitud y si las credenciales son correctas, se obtendrá la siguiente respuesta similar a esta:
          ```json
          {
              "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMzI3OTF9.NYZMPhV1pXbksebkOs-ORUpub737iJYo_8kToAWb8so",
