@@ -74,10 +74,11 @@ def upload_full_video():
     if 'file' not in request.files:
         return 'No file part'
     file = request.files['file']
+    json_data = request.json
     if file.filename == '':
         return 'No selected file'
     if file:
-        save_video(file)
+        save_video(file, json_data['path_file'])
         return 'Full video uploaded successfully'
 
 

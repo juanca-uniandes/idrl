@@ -79,6 +79,7 @@ services:
       - network
 
   almacenar:
+    container_name: almacenar
     build:
       context: ./almacenar
     command: python app.py

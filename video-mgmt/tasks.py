@@ -50,7 +50,6 @@ def save_processed_video(video_clip, filename):
 
 
 def process_saved_video(task_id, file_path):
-    #TODO notificar en base de datos que el video va a ser procesado (JUAN)
     original_video = VideoFileClip(UPLOAD_FOLDER + '/' + file_path)
     filename = original_video.filename.replace('videos/uploads/', '')
     selectQuery = """
@@ -79,6 +78,14 @@ def process_saved_video(task_id, file_path):
             INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
         """
         runQuery(insertQuery, (video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, 1, datetime.now(), datetime.now()))
+        requests.post('http://almacenar:5001/upload',
+             data={
+                'file':VideoFileClip(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename),
+                'path_file':UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/'
+             },
+             headers={'Content-Type': 'application/json'}
+        )
+        os.remove(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename)
     else:
         # Procesar por partes
         for i in range(0, int(total_duration), 20):
@@ -89,7 +96,6 @@ def process_saved_video(task_id, file_path):
             # Generate filename with start time
             clip_filename = os.path.splitext(filename)[0] + f'_part_{split_counter}.mp4'
 
-            # TODO notificar en base de datos que el video fue procesado completamente (JUAN)
             save_processed_video(processed_clip, clip_filename)
 
             # Increment start_time
@@ -98,13 +104,21 @@ def process_saved_video(task_id, file_path):
                 INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
             """
             runQuery(insertQuery, (
-            video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, split_counter, datetime.now(), datetime.now()))
+            video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename, split_counter, datetime.now(), datetime.now()))
             split_counter += 1
-
+            requests.post('http://almacenar:5001/upload',
+              data={
+                  'file': VideoFileClip(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename),
+                  'path_file': UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/'
+              },
+              headers={'Content-Type': 'application/json'}
+            )
+            os.remove(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename)
     insertQuery = """
         INSERT INTO processing_videos(id_task, id_video, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
     """
     runQuery(insertQuery, (task_id, video_info['id'], 'Procesado', datetime.now(), datetime.now()))
+    os.remove(original_video.filename)
     return True
 
 
@@ -128,7 +142,13 @@ def insert_video(task_id, url):
         task_id = task_id
 
         runQuery(insert_query,(video_name, path, user_id, duration, loaded_at, processed_at, video_url, task_id))
-
+        requests.post('http://almacenar:5001/upload',
+          data={
+              'file': file,
+              'path_file': UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/'
+          },
+          headers={'Content-Type': 'application/json'}
+        )
         return video_name
     return None
 
