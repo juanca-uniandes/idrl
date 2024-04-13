@@ -2,6 +2,7 @@ import os
 import jwt
 from functools import wraps  # Importa wraps desde functools
 from flask import Flask, request, jsonify
+import base64
 
 app = Flask(__name__)
 
@@ -71,15 +72,30 @@ def clean_filename(filename):
 
 @app.route('/upload', methods=['POST'])
 def upload_full_video():
-    if 'file' not in request.files:
-        return 'No file part'
-    file = request.files['file']
+    # Obtener el JSON de la solicitud
     json_data = request.json
-    if file.filename == '':
-        return 'No selected file'
-    if file:
-        save_video(file, json_data['path_file'])
-        return 'Full video uploaded successfully'
+
+    # Verificar si el JSON contiene los campos necesarios
+    if 'file' not in json_data or 'path_file' not in json_data:
+        return jsonify({'message': 'Invalid JSON format', 'status': 400}), 400
+
+    # Obtener el contenido del archivo codificado en base64 y la ruta del archivo del JSON
+    file_content_base64 = json_data['file']
+    path_file = json_data['path_file']
+
+    # Verificar si se ha proporcionado un archivo
+    if not file_content_base64:
+        return jsonify({'message': 'No file content provided', 'status': 400}), 400
+
+    # Decodificar el contenido del archivo desde base64
+    file_content = base64.b64decode(file_content_base64)
+
+    # Guardar el archivo en la ruta especificada
+    with open(path_file, 'wb') as file:
+        file.write(file_content)
+
+    # Retornar una respuesta JSON indicando que el video se ha subido exitosamente
+    return jsonify({'message': 'Full video uploaded successfully', 'status': 200}), 200
 
 
 if __name__ == '__main__':

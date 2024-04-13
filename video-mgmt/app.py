@@ -16,6 +16,7 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
+        current_user = None
 
         # Verificar si el token está presente en el encabezado Authorization
         if 'Authorization' in request.headers:
@@ -35,7 +36,9 @@ def token_required(f):
 
         # Agregar la información del usuario a la solicitud
         request.current_user = current_user
-        return f(*args, **kwargs)
+
+        # Pasar la información del usuario a la función decorada (opcional)
+        return f(current_user, *args, **kwargs)
 
     return decorated
 
@@ -54,25 +57,25 @@ def index():
 # Rutas protegidas que requieren un token válido
 @app.route('/task/start', methods=['POST'])
 @token_required
-def start():
-    url = request.json['url']    
-    task = process_video.delay(url)
-    return jsonify({'task_id': str(task.id)}), 202
+def start(current_user):
+    url = request.json['url']
+    task = process_video.delay(url, current_user)
+    return jsonify({'task_id': str(task.id), 'user': current_user}), 202
 
 
 @app.route('/task/status/<task_id>', methods=['GET'])
 @token_required
-def status(task_id):
+def status(current_user, task_id):
     task = celery_app.AsyncResult(task_id)
-    return jsonify({'state': str(task.state), 'info': task.info}), 200
+    return jsonify({'state': str(task.state), 'info': task.info, 'user': current_user}), 200
 
 
 @app.route('/task/abort/<task_id>', methods=['DELETE'])
 @token_required
-def abort(task_id):
+def abort(current_user, task_id):
     task = celery_app.AsyncResult(task_id)
     task.revoke(terminate=True)
-    return jsonify({'status': 'Task aborted!'}), 200
+    return jsonify({'status': 'Task aborted!', 'user': current_user}), 200
 
 
 if __name__ == '__main__':

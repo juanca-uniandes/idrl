@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip
 import requests
+import base64
 
 
 broker_url = 'redis://redis:6379/0'
@@ -78,10 +79,15 @@ def process_saved_video(task_id, file_path):
             INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
         """
         runQuery(insertQuery, (video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, 1, datetime.now(), datetime.now()))
+
+        video_path_to_send = UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename
+        with open(video_path_to_send, 'rb') as file:
+            video_content = file.read()
+        file_content_base64 = base64.b64encode(video_content).decode('utf-8')
         requests.post('http://almacenar:5001/upload',
-             data={
-                'file':VideoFileClip(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename),
-                'path_file':UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/'
+             json={
+                'file': file_content_base64,
+                'path_file': video_path_to_send
              },
              headers={'Content-Type': 'application/json'}
         )
@@ -106,10 +112,15 @@ def process_saved_video(task_id, file_path):
             runQuery(insertQuery, (
             video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename, split_counter, datetime.now(), datetime.now()))
             split_counter += 1
+
+            video_path_to_send = UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename
+            with open(video_path_to_send, 'rb') as file:
+                video_content = file.read()
+            file_content_base64 = base64.b64encode(video_content).decode('utf-8')
             requests.post('http://almacenar:5001/upload',
-              data={
-                  'file': VideoFileClip(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename),
-                  'path_file': UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/'
+              json={
+                  'file': file_content_base64,
+                  'path_file': video_path_to_send
               },
               headers={'Content-Type': 'application/json'}
             )
@@ -122,7 +133,7 @@ def process_saved_video(task_id, file_path):
     return True
 
 
-def insert_video(task_id, url):
+def insert_video(task_id, url, current_user):
 
     # Insert a record into the videos table
     insert_query = """
@@ -135,17 +146,21 @@ def insert_video(task_id, url):
         video_name = file.filename.replace('videos/uploads/', '')
         duration = file.duration
         path = UPLOAD_FOLDER + "/" + video_name
-        user_id = 1
+        user_id = current_user
         loaded_at = datetime.now()
         processed_at = None
         video_url = url
         task_id = task_id
 
         runQuery(insert_query,(video_name, path, user_id, duration, loaded_at, processed_at, video_url, task_id))
+        video_path_to_send = file.filename
+        with open(video_path_to_send, 'rb') as file:
+            video_content = file.read()
+        file_content_base64 = base64.b64encode(video_content).decode('utf-8')
         requests.post('http://almacenar:5001/upload',
-          data={
-              'file': file,
-              'path_file': UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/'
+          json={
+              'file': file_content_base64,
+              'path_file': video_path_to_send
           },
           headers={'Content-Type': 'application/json'}
         )
@@ -205,8 +220,8 @@ def download_video_from_url(url, destination_path):
         return None
 
 @app.task(bind=True)
-def process_video(self, url):
+def process_video(self, url, current_user):
     task_id = self.request.id
-    file_path = insert_video(task_id, url)
+    file_path = insert_video(task_id, url, current_user)
     process_saved_video(task_id, file_path)
     return {'status': 'completado!', 'result': 100}
