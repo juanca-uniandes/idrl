@@ -73,6 +73,106 @@ DO UPDATE SET
     email = EXCLUDED.email,
     pass = EXCLUDED.pass,
     updated_at = EXCLUDED.updated_at;
+--------------------------------------------------------------
+--procedimiento para la consulta de todas de tareas
+CREATE OR REPLACE FUNCTION fn_info_tasks(max_limit INT, orden INT)
+RETURNS TABLE (
+	task_id VARCHAR(100)
+	, status VARCHAR(20)
+)
+language plpgsql 
+AS $$
+BEGIN
+    RETURN QUERY 
+		SELECT pv.id_task, pv.status 
+		FROM processing_videos pv
+		ORDER BY
+		    CASE
+		        WHEN orden = 0 THEN pv.id_task
+		    END ASC,
+		    CASE
+		        WHEN orden = 1  THEN pv.id_task
+		    END desc
+		LIMIT case when (max_limit is not null or max_limit > 0) then max_limit end;
+END
+$$;
+
+--procedimiento para la consulta de una tarea
+CREATE OR replace FUNCTION fn_info_task(_task_id VARCHAR(100))
+RETURNS TABLE (
+	  id_task VARCHAR(100)
+	, status VARCHAR(20)
+	, url  VARCHAR(255)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY 
+		SELECT pv.id_task, pv.status, v.url
+		FROM processing_videos pv
+			left join videos v on v.id = pv.id_video 
+		where  pv.id_task = _task_id;
+END
+$$;
+
+--procedimiento para recuperar el path del video
+CREATE OR replace FUNCTION fn_task_video_path(_task_id VARCHAR(100))
+RETURNS TABLE (
+	  path_video TEXT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY 
+		SELECT v."path" || '\' || v.video_name as path_video
+		FROM processing_videos pv
+			join videos v on v.id = pv.id_video  
+		where  pv.id_task = _task_id;
+END
+$$;
+
+--procedimiento para recuperar el path de los splits
+CREATE OR replace FUNCTION fn_task_split_video_path(_task_id VARCHAR(100))
+RETURNS TABLE (
+	  path_video VARCHAR(255)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY 
+		SELECT v.split_path as path_video
+		FROM processing_videos pv
+			join split_videos v on v.id_video   = pv.id_video  
+		where  pv.id_task =  _task_id;
+END
+$$;
+
+--procedimiento para abortar tarea
+CREATE OR REPLACE PROCEDURE sp_abort_task(_id_task VARCHAR(100))
+LANGUAGE plpgsql
+AS $$
+	declare _id_video INT;
+begin
+--Recuperar id del video
+	SELECT pv.id_video 
+	FROM processing_videos pv
+	where  pv.id_task = _id_task
+	into _id_video;
+
+--borrar split_videos
+	delete from split_videos
+	where id_video = _id_video;
+
+--borrar video
+	delete from videos
+	where id = _id_video;
+
+--Actualizar procesamiento
+	update processing_videos 
+	set status = 'canceled'
+	where id_task = _id_task;
+END
+$$;
 """
 
 # Ejecutar las sentencias SQL

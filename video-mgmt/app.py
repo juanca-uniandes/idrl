@@ -4,6 +4,7 @@ import jwt
 import datetime
 import requests
 from tasks import app as celery_app, process_video
+from util import fn_info_tasks, fn_info_task, delete_task
 
 app = Flask(__name__)
 
@@ -63,19 +64,35 @@ def start(current_user):
     return jsonify({'task_id': str(task.id), 'user': current_user}), 202
 
 
-@app.route('/task/status/<task_id>', methods=['GET'])
+@app.route('/tasks', methods=['GET'])
 @token_required
-def status(current_user, task_id):
-    task = celery_app.AsyncResult(task_id)
-    return jsonify({'state': str(task.state), 'info': task.info, 'user': current_user}), 200
+def status_all():    
+    max = request.args.get('max', default=None, type=int)
+    order = request.args.get('order', default=None, type=int)    
+    results = fn_info_tasks(max, order)
+    if results:
+        data = [{'task_id': row[0], 'status': row[1]} for row in results]
+        return jsonify(data)        
+    else:
+        return jsonify({'error': 'Error al ejecutar el procedimiento almacenado'}), 500
 
-
-@app.route('/task/abort/<task_id>', methods=['DELETE'])
+@app.route('/tasks/<task_id>', methods=['GET'])
 @token_required
-def abort(current_user, task_id):
+def status_id(task_id):    
+    results = fn_info_task(task_id)
+    if results:
+        data = [{'task_id': row[0], 'status': row[1], 'url': row[2]} for row in results]
+        return jsonify(data)
+    else:
+        return jsonify({'error': 'Error al ejecutar el procedimiento almacenado'}), 500
+
+@app.route('/tasks/<task_id>', methods=['DELETE'])
+@token_required
+def abort(task_id):
     task = celery_app.AsyncResult(task_id)
     task.revoke(terminate=True)
-    return jsonify({'status': 'Task aborted!', 'user': current_user}), 200
+    result = delete_task(task_id)
+    return jsonify(result), 200
 
 
 if __name__ == '__main__':
