@@ -66,7 +66,7 @@ def start(current_user):
 
 @app.route('/tasks', methods=['GET'])
 @token_required
-def status_all():    
+def status_all(current_user):
     max = request.args.get('max', default=None, type=int)
     order = request.args.get('order', default=None, type=int)    
     results = fn_info_tasks(max, order)
@@ -78,7 +78,7 @@ def status_all():
 
 @app.route('/tasks/<task_id>', methods=['GET'])
 @token_required
-def status_id(task_id):    
+def status_id(current_user, task_id):    
     results = fn_info_task(task_id)
     if results:
         data = [{'task_id': row[0], 'status': row[1], 'url': row[2]} for row in results]
@@ -88,7 +88,7 @@ def status_id(task_id):
 
 @app.route('/tasks/<task_id>', methods=['DELETE'])
 @token_required
-def abort(task_id):
+def abort(current_user, task_id):
     task = celery_app.AsyncResult(task_id)
     task.revoke(terminate=True)
     result = delete_task(task_id)
