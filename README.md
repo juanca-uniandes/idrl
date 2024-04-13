@@ -10,19 +10,19 @@
     ```
 
 - **Iniciar los contenedores Docker:**
-  - Navega al directorio del proyecto clonado:
+  - Una vez clonado el repositorio, navega al directorio del proyecto clonado:
     ```bash
     cd idrl
     ```
-  - Ejecuta el siguiente comando para iniciar los contenedores Docker definidos en el archivo `docker-compose.yml`:
+  - Inicia los contenedores Docker definidos en el archivo `docker-compose.yml` ejecutando el siguiente comando:
     ```bash
     docker-compose up
     ```
 
 - **Verificar el despliegue:**
-  - Todos los endpoints que se van a mostrar a continuación deben llevar como header el content type application/json:
+  - Todos los endpoints que se detallan a continuación requieren el header `Content-Type: application/json`:
     1. **Registro de usuario:**
-       - Para registrar el usuario, realiza una solicitud POST a `http://127.0.0.1:5050/register` con un body que contenga el username, email y password como información **[Todos estos campos son requeridos y username y email deberán ser únicos]**. Ejemplo:
+       - Realiza una solicitud POST a `http://127.0.0.1:5050/register` con un cuerpo que contenga los siguientes campos:
          ```json
          {
              "username": "admin",
@@ -30,15 +30,15 @@
              "password": "admin"
          }
          ```
-    2. **Solicitud del token para poder hacer peticiones a los demás end-points:**
-       - Para solicitar el token, realiza una solicitud POST a `http://127.0.0.1:5050/login` con un body que contenga el email y el password. Ejemplo:
+    2. **Obtener token de acceso:**
+       - Realiza una solicitud POST a `http://127.0.0.1:5050/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
          ```json
          {
              "email": "admin@gmail.com",
              "password": "12345"
          }
          ```
-       - Una vez realizada la solicitud y si las credenciales son correctas, se obtendrá la siguiente respuesta similar a esta:
+       - Si las credenciales son correctas, recibirás una respuesta similar a esta:
          ```json
          {
              "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMzI3OTF9.NYZMPhV1pXbksebkOs-ORUpub737iJYo_8kToAWb8so",
@@ -49,8 +49,8 @@
              }
          }
          ```
-    3. **Cargar video para ser procesado:**
-       - Para hacer la solicitud de la carga del video, realiza una solicitud POST a `http://127.0.0.1:5004/task/start` con Autorización Bearer, donde el valor de dicha autorización es el token generado en el paso 2. Además, en el body se deberá enviar el siguiente cuerpo que contiene un parámetro `url`, donde dicha url es la url de donde se obtendrá el video. Los formatos distintos a los permitidos (MP4) serán descartados. Ejemplo de cómo debería lucir la solicitud:
+    3. **Cargar video para procesamiento:**
+       - Realiza una solicitud POST a `http://127.0.0.1:5004/task/start` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
          ```bash
          curl --location 'http://localhost:5004/task/start' \
          --header 'Content-Type: application/json' \
@@ -59,7 +59,7 @@
              "url": "https://cdn.pixabay.com/video/2023/06/28/169249-840702546_large.mp4"
          }'
          ```
-       - Ejemplo del body de la solicitud:
+       - El cuerpo de la solicitud debe contener la URL del video a procesar:
          ```json
          {
              "url": "https://cdn.pixabay.com/video/2023/06/28/169249-840702546_large.mp4"
