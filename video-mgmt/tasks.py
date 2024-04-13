@@ -24,9 +24,6 @@ UPLOAD_FOLDER_TO_PROCESSED_VIDEOS = 'videos/processed'
 ALLOWED_EXTENSIONS = {'mp4'}
 LOGO_PATH = 'logo.png'
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 def shorten_video_duration(video_clip, start, end):
     return video_clip.subclip(start, end)
@@ -219,9 +216,19 @@ def download_video_from_url(url, destination_path):
         print(f"An error occurred while downloading the video: {str(e)}")
         return None
 
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.task(bind=True)
 def process_video(self, url, current_user):
     task_id = self.request.id
+
+    if not allowed_file(url):
+        error_message = f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"
+        return {'error': error_message}
+
     file_path = insert_video(task_id, url, current_user)
     process_saved_video(task_id, file_path)
+
     return {'status': 'completado!', 'result': 100}
