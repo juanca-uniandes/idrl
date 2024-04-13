@@ -59,9 +59,18 @@ def index():
 @app.route('/task/start', methods=['POST'])
 @token_required
 def start(current_user):
-    url = request.json['url']
+    try:
+        url = request.json['url']
+    except KeyError:
+        abort(400, description="URL del video no proporcionada")
+
     task = process_video.delay(url, current_user)
-    return jsonify({'task_id': str(task.id), 'user': current_user}), 202
+    result = task.get()
+
+    if 'error' in result:
+        return jsonify(result), 400
+    else:
+        return jsonify({'task_id': str(task.id), 'user': current_user}), 202
 
 
 @app.route('/tasks', methods=['GET'])

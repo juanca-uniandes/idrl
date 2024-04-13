@@ -1,5 +1,13 @@
 ### Pasos para el despliegue del proyecto
 
+**Tecnologías asociadas:**
+- Docker
+- Flask
+- Redis
+- Celery
+- PostgreSQL
+- JMeter
+
 - **Instalación de Docker:**
   - Asegúrate de tener Docker instalado en tu sistema. Puedes descargar e instalar Docker desde [este enlace](https://docs.docker.com/get-docker/). Se recomienda utilizar la versión Docker 25.0.3 o superior.
 

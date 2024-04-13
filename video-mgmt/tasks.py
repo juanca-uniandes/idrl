@@ -7,6 +7,7 @@ import os
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip
 import requests
 import base64
+from flask import Flask, request, jsonify
 
 
 broker_url = 'redis://redis:6379/0'
