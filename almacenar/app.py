@@ -97,6 +97,17 @@ def upload_full_video():
     # Retornar una respuesta JSON indicando que el video se ha subido exitosamente
     return jsonify({'message': 'Full video uploaded successfully', 'status': 200}), 200
 
+@app.route('/delete', methods=['DELETE'])
+def delete_video():
+    video_path = request.args.get('video_path', default=None, type=str)
+    try:
+        if os.path.exists(video_path):
+            os.remove(video_path)
+            return jsonify({'message': 'video deleted successfully', 'status': 200}), 200
+        else:
+            return jsonify({'message': f'video not exists: {video_path} ', 'status': 500}), 500
+    except Exception as e:
+        return jsonify({'message': str(e), 'status': 500}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)

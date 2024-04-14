@@ -1,4 +1,5 @@
 import psycopg2
+import requests
 
 # Función para conectarse a la base de datos y ejecutar el status de todas las tareas
 def fn_info_tasks(max, order):
@@ -151,11 +152,14 @@ def sp_abort_task(id_task):
 
 def delete_task(id_task):
     path_videos = fn_path_video(id_task)
-    for file in path_videos:
-        print("borrar archivo",file)
-
+    for file in path_videos:               
+        url_delete_file = f"http://almacenar:5001/delete?video_path={file[0]}"
+        requests.delete(url_delete_file, headers={'Content-Type': 'application/json'})
+    
     path_split_videos = fn_path_split_video(id_task)
     for file in path_split_videos:
-        print("borrar archivo",file)
+        url_delete_file = f"http://almacenar:5001/delete?video_path={file[0]}"
+        requests.delete(url_delete_file, headers={'Content-Type': 'application/json'})
     
     return sp_abort_task(id_task)
+    
