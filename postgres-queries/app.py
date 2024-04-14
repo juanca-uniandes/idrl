@@ -118,13 +118,13 @@ $$;
 --procedimiento para recuperar el path del video
 CREATE OR replace FUNCTION fn_task_video_path(_task_id VARCHAR(100))
 RETURNS TABLE (
-	  path_video TEXT
+	  path_video VARCHAR(255)
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY 
-		SELECT v."path" || '\' || v.video_name as path_video
+		SELECT v."path" as path_video
 		FROM processing_videos pv
 			join videos v on v.id = pv.id_video  
 		where  pv.id_task = _task_id;
