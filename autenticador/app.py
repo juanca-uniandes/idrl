@@ -26,7 +26,6 @@ def connect_db():
 
 # Ruta para el registro de usuarios
 @app.route('/auth/signup', methods=['POST'])
-@app.route('/auth/signup', methods=['POST'])
 def signup():
     # Obtener datos del cuerpo de la solicitud
     data = request.get_json()
