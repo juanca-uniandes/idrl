@@ -48,18 +48,13 @@
       ```json
       {
           "email": "admin@gmail.com",
-          "password": "12345"
+          "password": "Admin123",
       }
       ```
       - Si las credenciales son correctas, recibirás una respuesta similar a esta:
       ```json
       {
-          "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMzI3OTF9.NYZMPhV1pXbksebkOs-ORUpub737iJYo_8kToAWb8so",
-          "user": {
-              "email": "admin@gmail.com",
-              "id": 1,
-              "username": "admin"
-          }
+          "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMzI3OTF9.NYZMPhV1pXbksebkOs-ORUpub737iJYo_8kToAWb8so"
       }
       ```
 
