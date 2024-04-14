@@ -51,7 +51,7 @@ def task():
 
 @app.route('/task/ok')
 @token_required
-def index():
+def index(current_user):
     return 'OK OK OK!'
 #### ELIMINAR DESPUES DE VALIDADO ####
 

@@ -24,8 +24,8 @@ def connect_db():
     )
 
 # Ruta para el registro de usuarios
-@app.route('/register', methods=['POST'])
-def register():
+@app.route('/auth/signup', methods=['POST'])
+def signup():
     # Obtener datos del cuerpo de la solicitud
     data = request.get_json()
     username = data['username']
@@ -47,7 +47,7 @@ def register():
     return jsonify({'message': 'User registered successfully'})
 
 # Ruta para el inicio de sesión de usuarios
-@app.route('/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST'])
 def login():
     # Obtener datos del cuerpo de la solicitud
     data = request.get_json()
@@ -69,7 +69,8 @@ def login():
         cursor.close()
         connection.close()
         # Devolver el token y la información del usuario como parte de la respuesta
-        return jsonify({'user': {'id': user[0], 'username': user[1], 'email': user[2]}, 'token': token})
+        # return jsonify({'user': {'id': user[0], 'username': user[1], 'email': user[2]}, 'token': token})
+        return jsonify({'token': token})
     else:
         cursor.close()
         connection.close()
