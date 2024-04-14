@@ -4,6 +4,7 @@ import jwt
 import datetime
 import psycopg2
 import os
+import re
 
 app = Flask(__name__)
 
@@ -25,26 +26,59 @@ def connect_db():
 
 # Ruta para el registro de usuarios
 @app.route('/auth/signup', methods=['POST'])
+@app.route('/auth/signup', methods=['POST'])
 def signup():
     # Obtener datos del cuerpo de la solicitud
     data = request.get_json()
-    username = data['username']
-    email = data['email']
-    password = generate_password_hash(data['password'])
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    password_2 = data.get('password_2')
 
-    # Conectar a la base de datos
+    # Verificar si todos los campos están presentes en la solicitud
+    if not (username and email and password and password_2):
+        return jsonify({'message': 'Todos los campos son obligatorios'}), 400
+
+    # Verificar si la contraseña coincide con la confirmación de la contraseña
+    if password != password_2:
+        return jsonify({'message': 'Las contraseñas no coinciden'}), 400
+
+    # Verificar si la contraseña cumple con los lineamientos mínimos de seguridad
+    if len(password) < 8:
+        return jsonify({'message': 'El usuario no pudo ser creado la contraseña debe tener al menos 8 caracteres'}), 400
+    if not re.search(r'[A-Z]', password):
+        return jsonify({'message': 'El usuario no pudo ser creado la contraseña debe contener al menos una letra mayúscula'}), 400
+    if not re.search(r'[a-z]', password):
+        return jsonify({'message': 'El usuario no pudo ser creado la contraseña debe contener al menos una letra minúscula'}), 400
+    if not re.search(r'[0-9]', password):
+        return jsonify({'message': 'El usuario no pudo ser creado la contraseña debe contener al menos un dígito'}), 400
+
+    # Conectar a la base de datos y verificar si el nombre de usuario y el correo electrónico ya existen
     connection = connect_db()
     cursor = connection.cursor()
 
+    cursor.execute("SELECT * FROM usuarios WHERE username = %s", (username,))
+    if cursor.fetchone():
+        cursor.close()
+        connection.close()
+        return jsonify({'message': 'El usuario no pudo ser creado el nombre de usuario ya existe'}), 400
+
+    cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+    if cursor.fetchone():
+        cursor.close()
+        connection.close()
+        return jsonify({'message': 'El usuario no pudo ser creado el Email ya existe'}), 400
+
     # Insertar usuario en la base de datos
-    cursor.execute("INSERT INTO usuarios (username, email, pass) VALUES (%s, %s, %s)", (username, email, password))
+    hashed_password = generate_password_hash(password)
+    cursor.execute("INSERT INTO usuarios (username, email, pass) VALUES (%s, %s, %s)", (username, email, hashed_password))
     connection.commit()
 
     # Cerrar la conexión y el cursor
     cursor.close()
     connection.close()
 
-    return jsonify({'message': 'User registered successfully'})
+    return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
 # Ruta para el inicio de sesión de usuarios
 @app.route('/auth/login', methods=['POST'])
@@ -74,7 +108,7 @@ def login():
     else:
         cursor.close()
         connection.close()
-        return jsonify({'message': 'Invalid email or password'}), 401
+        return jsonify({'message': 'Correo electrónico o contraseña no válidos'}), 401
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002)

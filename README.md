@@ -33,17 +33,18 @@
   - Todos los endpoints que se detallan a continuación requieren el encabezado `Content-Type: application/json`:
 
     1. **Registro de usuario:**
-      - Realiza una solicitud POST a `http://127.0.0.1:5050/register` con un cuerpo que contenga los siguientes campos:
+      - Realiza una solicitud POST a `http://127.0.0.1:5050/auth/signup` con un cuerpo que contenga los siguientes campos:
       ```json
       {
           "username": "admin",
           "email": "admin@gmail.com",
-          "password": "admin"
+          "password": "Admin123",
+          "password_2": "Admin123"
       }
       ```
 
     2. **Obtener token de acceso:**
-      - Realiza una solicitud POST a `http://127.0.0.1:5050/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
+      - Realiza una solicitud POST a `http://127.0.0.1:5050/auth/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
       ```json
       {
           "email": "admin@gmail.com",
@@ -65,7 +66,7 @@
     3. **Cargar video para procesamiento:**
       - Realiza una solicitud POST a `http://127.0.0.1:5050/task/start` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
       ```bash
-      curl --location 'http://localhost:5004/task/start' \
+      curl --location 'http://localhost:5050/task/start' \
       --header 'Content-Type: application/json' \
       --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw' \
       --data  '{
