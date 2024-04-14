@@ -44,19 +44,14 @@ def token_required(f):
     return decorated
 
 #### Pruebas nginx y JWT ####
-@app.route('/task')
-def task():
-    return 'OK'
-
-
-@app.route('/task/ok')
+@app.route('/tasks/ok')
 @token_required
 def index(current_user):
     return 'OK OK OK!'
 #### ELIMINAR DESPUES DE VALIDADO ####
 
 # Rutas protegidas que requieren un token válido
-@app.route('/task/start', methods=['POST'])
+@app.route('/tasks', methods=['POST'])
 @token_required
 def start(current_user):
     try:
@@ -101,8 +96,7 @@ def abort(current_user, task_id):
     task = celery_app.AsyncResult(task_id)
     task.revoke(terminate=True)
     result = delete_task(task_id)
-    return jsonify(result), 200
-
+    return jsonify({'result': 'Tarea cancelada correctamente'}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5004)
