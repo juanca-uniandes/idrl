@@ -64,9 +64,9 @@
       ```
 
     3. **Cargar video para procesamiento:**
-      - Realiza una solicitud POST a `http://127.0.0.1:5050/task/start` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
+      - Realiza una solicitud POST a `http://127.0.0.1:5050/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
       ```bash
-      curl --location 'http://localhost:5050/task/start' \
+      curl --location 'http://localhost:5050/tasks' \
       --header 'Content-Type: application/json' \
       --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw' \
       --data  '{
@@ -79,3 +79,32 @@
           "url": "https://cdn.pixabay.com/video/2023/06/28/169249-840702546_large.mp4"
       }
       ```
+      4. **Consultar estado de todas las tareas**
+      - Realiza una solicitud GET a http://localhost:5050/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - El parametro "max" indica el numero maximo de registros
+      - El parametro "order" especifica el orden en que se muestran los datos, 0 si es ascendete y 1 si es descendente
+      - Ejemplo:
+    ```
+    curl --location 'http://localhost:5050/tasks?max=4&order=1' \
+    --header 'Content-Type: application/json' \
+    --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
+    ```
+    5. **Consultar estado de una tarea**
+      - Realiza una solicitud GET a http://localhost:5050/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - ID-TASK es el codigo de la tarea 
+      - Ejemplo:
+    ```
+    curl --location 'http://localhost:5050/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    --header 'Content-Type: application/json' \
+    --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
+    ```
+  
+    6. **Abortar una tarea:**
+      - Realiza una solicitud DELETE a http://127.0.0.1:5050/task/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - ID-TASK es el codigo de la tarea, que se puede obtener de la consulta especificada en el paso (4)
+      - Ejemplo:
+    ```
+    curl -X DELETE --location 'http://localhost:5050/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    --header 'Content-Type: application/json' \
+    --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
+    ```
