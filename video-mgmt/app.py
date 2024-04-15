@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # URL del servidor que proporciona el token después del inicio de sesión
 LOGIN_URL = 'http://autenticador:5002/login'
-
+ALLOWED_EXTENSIONS = {'mp4'}
 
 # Función de decorador para validar el token JWT
 def token_required(f):
@@ -50,22 +50,25 @@ def index(current_user):
     return 'OK OK OK!'
 #### ELIMINAR DESPUES DE VALIDADO ####
 
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 # Rutas protegidas que requieren un token válido
 @app.route('/tasks', methods=['POST'])
 @token_required
 def start(current_user):
     try:
         url = request.json['url']
+        if not url:
+            return jsonify({'error': 'La URL no puede estar vacía'}), 404
     except KeyError:
-        abort(400, description="URL del video no proporcionada")
+        return jsonify({'error': 'Proporcione una URL'}), 404
+    if not allowed_file(url):
+        return jsonify({'error': f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"}), 404
 
     task = process_video.delay(url, current_user)
-    result = task.get()
-
-    if 'error' in result:
-        return jsonify(result), 400
-    else:
-        return jsonify({'task_id': str(task.id), 'user': current_user}), 202
+    return jsonify({'task_id': str(task.id), 'user': current_user}), 202
 
 
 @app.route('/tasks', methods=['GET'])

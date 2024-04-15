@@ -224,11 +224,6 @@ def allowed_file(filename):
 @app.task(bind=True)
 def process_video(self, url, current_user):
     task_id = self.request.id
-
-    if not allowed_file(url):
-        error_message = f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"
-        return {'error': error_message}
-
     file_path = insert_video(task_id, url, current_user)
     process_saved_video(task_id, file_path)
 
