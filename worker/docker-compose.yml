@@ -1,0 +1,27 @@
+version: '3'
+
+services:  
+  
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    networks:
+      - network
+
+  tasks:
+    build:
+      context: ./tasks
+    command: celery -A tasks worker --loglevel=info
+    volumes:
+      - ./tasks:/app
+    depends_on:
+      - redis
+    ports:
+      - "5005:5005"
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
