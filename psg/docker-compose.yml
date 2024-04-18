@@ -6,9 +6,9 @@ services:
     image: postgres:latest
     container_name: postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_DB_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      POSTGRES_DB: idrl_db
+      POSTGRES_USER: idrl_user
+      POSTGRES_PASSWORD: idrl_2024
     ports:
       - "5432:5432"
     volumes:
@@ -24,9 +24,9 @@ services:
         - postgres-db
       environment:
         POSTGRES_HOST: postgres
-        POSTGRES_DB: ${POSTGRES_DB_NAME}
-        POSTGRES_USER: ${POSTGRES_DB_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+        POSTGRES_DB: idrl_db
+        POSTGRES_USER: idrl_user
+        POSTGRES_PASSWORD: idrl_2024
       ports:
         - "8000:8000"
       command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]

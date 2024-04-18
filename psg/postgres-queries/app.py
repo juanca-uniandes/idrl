@@ -2,18 +2,14 @@ import os
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Obtener las variables de entorno
-DB_NAME = os.getenv("POSTGRES_DB")
-DB_USER = os.getenv("POSTGRES_USER")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = os.getenv("POSTGRES_HOST")
+
 
 # Conexión a la base de datos
 connection = psycopg2.connect(
-    dbname=DB_NAME,
-    user=DB_USER,
-    password=DB_PASSWORD,
-    host=DB_HOST
+    dbname="idrl_db",
+    user="idrl_user",
+    password="idrl_2024",
+    host="postgres"
 )
 
 # Crear un cursor para ejecutar comandos SQL
