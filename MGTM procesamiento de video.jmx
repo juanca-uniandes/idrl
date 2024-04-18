@@ -10,7 +10,7 @@
     </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="MGTM procesamiento de video">
-        <intProp name="ThreadGroup.num_threads">50000</intProp>
+        <intProp name="ThreadGroup.num_threads">50</intProp>
         <intProp name="ThreadGroup.ramp_time">2</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
@@ -21,7 +21,7 @@
       </ThreadGroup>
       <hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Procesamiento de video">
-          <stringProp name="HTTPSampler.path">http://localhost:5004/task/start</stringProp>
+          <stringProp name="HTTPSampler.path">http://localhost:5004/tasks</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -31,7 +31,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-    &quot;url&quot;: &quot;https://img.freepik.com/foto-gratis/ejemplo-3d-pluma-que-pone-garrapatas-azules-papel_107791-15675.jpg&quot;&#xd;
+    &quot;url&quot;: &quot;https://cdn.pixabay.com/video/2023/06/28/169249-840702546_large.mp5&quot;&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -43,7 +43,7 @@
             <collectionProp name="HeaderManager.headers">
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Authorization</stringProp>
-                <stringProp name="Header.value">Barer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwNDAyNDh9.LDESDSnmf_K2xlLIKTBvO0hbvTOTmILgfNhCU11naB4</stringProp>
+                <stringProp name="Header.value">Barer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMxNDY1MjN9.09d0L32flHiunM4gqqzeX_SCoMrwidl94OvXCL48EjY</stringProp>
               </elementProp>
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Content-Type</stringProp>
