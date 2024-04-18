@@ -14,59 +14,27 @@ services:
     networks:
       - network
 
-  postgres-db:
-    image: postgres:latest
-    container_name: postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_DB_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./data:/var/lib/postgresql/data
-    networks:
-      - network
-
-
-  postgres-queries:
-      build: ./postgres-queries
-      container_name: postgres_queries
-      depends_on:
-        - postgres-db
-      environment:
-        POSTGRES_HOST: postgres
-        POSTGRES_DB: ${POSTGRES_DB_NAME}
-        POSTGRES_USER: ${POSTGRES_DB_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
-      ports:
-        - "8000:8000"
-      # command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]
-      networks:
-        - network
-
   redis:
     image: "redis:latest"
     ports:
       - "6379:6379"
     networks:
       - network
+
   worker:
     build:
-      context: ./video-mgmt
+      context: ./worker
     command: celery -A tasks worker --loglevel=info
     volumes:
-      - ./video-mgmt:/app
+      - ./worker:/app
     depends_on:
       - redis
-      - postgres-db
     networks:
       - network
 
-
-  autenticador:
+  web-server:
     build:
-      context: ./autenticador
+      context: ./web-server
     command: python app.py
     ports:
       - "5002:5002"
@@ -89,20 +57,6 @@ services:
       - ./almacenar:/app
     depends_on:
       - video-mgmt
-    networks:
-      - network
-
-  video-mgmt:
-    build:
-      context: ./video-mgmt
-    command: python app.py
-    ports:
-      - "5004:5004"
-    volumes:
-      - ./video-mgmt:/app
-    depends_on:
-      - redis
-      - postgres-db
     networks:
       - network
 
