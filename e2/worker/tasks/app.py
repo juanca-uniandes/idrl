@@ -19,6 +19,160 @@ ALLOWED_EXTENSIONS = {'mp4'}
 LOGO_PATH = 'logo.png'
 
 
+# Función para conectarse a la base de datos y ejecutar el status de todas las tareas
+@app.route('/worker/tasks/<int:max>/<int:order>', methods=['GET'])
+def fn_info_tasks(max, order):
+    db_params = {
+        'dbname': "idrl_db",
+        'user': "idrl_user",
+        'password': "idrl_2024",
+        'host': "postgres"
+    }
+    try:
+        # Conexión a la base de datos PostgreSQL
+        conn = psycopg2.connect(**db_params)
+        cur = conn.cursor()
+
+        # Ejecutar el procedimiento almacenado
+        cur.execute('select * from fn_info_tasks(%s, %s);', (max, order) )
+
+        # Obtener los resultados del procedimiento almacenado
+        results = cur.fetchall()
+
+        # Cerrar cursor y conexión
+        cur.close()
+        conn.close()
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return None
+
+# Función para conectarse a la base de datos y ejecutar el status de una tarea
+def fn_info_task(id_task):
+    db_params = {
+        'dbname': "idrl_db",
+        'user': "idrl_user",
+        'password': "idrl_2024",
+        'host': "postgres"
+    }
+    try:
+        # Conexión a la base de datos PostgreSQL
+        conn = psycopg2.connect(**db_params)
+        cur = conn.cursor()
+
+        # Ejecutar el procedimiento almacenado
+        query = """select * from fn_info_task(%s);"""
+        cur.execute(query, (id_task,))
+
+        # Obtener los resultados del procedimiento almacenado
+        results = cur.fetchall()
+
+        # Cerrar cursor y conexión
+        cur.close()
+        conn.close()
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return None
+
+def fn_path_video(id_task):
+    db_params = {
+        'dbname': "idrl_db",
+        'user': "idrl_user",
+        'password': "idrl_2024",
+        'host': "postgres"
+    }
+    try:
+        # Conexión a la base de datos PostgreSQL
+        conn = psycopg2.connect(**db_params)
+        cur = conn.cursor()
+
+        # Ejecutar el procedimiento almacenado        
+        query = """select * from fn_task_video_path(%s);"""
+        cur.execute(query, (id_task,))
+
+        # Obtener los resultados del procedimiento almacenado
+        results = cur.fetchall()
+
+        # Cerrar cursor y conexión
+        cur.close()
+        conn.close()
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return None
+
+def fn_path_split_video(id_task):
+    db_params = {
+        'dbname': "idrl_db",
+        'user': "idrl_user",
+        'password': "idrl_2024",
+        'host': "postgres"
+    }
+    try:
+        # Conexión a la base de datos PostgreSQL
+        conn = psycopg2.connect(**db_params)
+        cur = conn.cursor()
+
+        # Ejecutar el procedimiento almacenado        
+        query = """select * from fn_task_split_video_path(%s);"""
+        cur.execute(query, (id_task,))
+
+        # Obtener los resultados del procedimiento almacenado
+        results = cur.fetchall()
+
+        # Cerrar cursor y conexión
+        cur.close()
+        conn.close()
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return None
+
+def sp_abort_task(id_task):
+    db_params = {
+        'dbname': "idrl_db",
+        'user': "idrl_user",
+        'password': "idrl_2024",
+        'host': "postgres"
+    }
+    try:
+        # Conexión a la base de datos PostgreSQL
+        conn = psycopg2.connect(**db_params)
+        cur = conn.cursor()
+
+        # Ejecutar el procedimiento almacenado        
+        query = "CALL sp_abort_task(%s);"
+        cur.execute(query, (id_task,))
+
+        # commit the transaction
+        conn.commit()
+        
+        # Obtener los resultados del procedimiento almacenado
+        results = cur.fetchall()
+
+        # Cerrar cursor y conexión
+        cur.close()
+        conn.close()
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return None
+
+def delete_task(id_task):
+
+
+
 def shorten_video_duration(video_clip, start, end):
     return video_clip.subclip(start, end)
 
@@ -210,7 +364,7 @@ def download_video_from_url(url, destination_path):
         print(f"An error occurred while downloading the video: {str(e)}")
         return None
 
-@app.route('/worker/start', method=[GET])
+@app.route('/worker/start', methods=['GET'])
 @app.task(bind=True)
 def process_video(self, url, current_user):
     task_id = self.request.id
