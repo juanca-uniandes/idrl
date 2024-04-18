@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 import jwt
 import datetime
 import psycopg2
+import requests
 import os
 import re
 
@@ -23,6 +25,44 @@ def connect_db():
         password="idrl_2024",
         host="postgres"
     )
+
+# URL del servidor que realiza las tareas
+TASKS_URL = 'http://video-mgmt:5004/tasks'
+
+#EXTENCION de los videos
+ALLOWED_EXTENSIONS = {'mp4'}
+
+
+# Función de decorador para validar el token JWT
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        current_user = None
+
+        # Verificar si el token está presente en el encabezado Authorization
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]
+
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+
+        try:
+            # Decodificar el token y extraer la información del usuario
+            data = jwt.decode(token, 'videos-mgmt', algorithms=['HS256'])
+            current_user = data['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Invalid token!'}), 401
+
+        # Agregar la información del usuario a la solicitud
+        request.current_user = current_user
+
+        # Pasar la información del usuario a la función decorada (opcional)
+        return f(current_user, *args, **kwargs)
+
+    return decorated
 
 # Ruta para el registro de usuarios
 @app.route('/auth/signup', methods=['POST'])
@@ -108,6 +148,61 @@ def login():
         cursor.close()
         connection.close()
         return jsonify({'message': 'Correo electrónico o contraseña no válidos'}), 401
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Rutas protegidas que requieren un token válido
+@app.route('/tasks', methods=['POST'])
+@token_required
+def start(current_user):
+    try:
+        url = request.json['url']
+        if not url:
+            return jsonify({'error': 'La URL no puede estar vacía'}), 404
+    except KeyError:
+        return jsonify({'error': 'Proporcione una URL'}), 404
+    if not allowed_file(url):
+        return jsonify({'error': f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"}), 404
+    
+    response = requests.post(TASKS_URL, json={'url': url}, headers=request.headers)
+    if response.status_code != 202:
+        return jsonify({'error': 'Error al iniciar la tarea'}), 500
+
+    # Tarea iniciada correctamente
+    return jsonify({'task_id': 'Tarea iniciada correctamente'}), 202
+
+
+@app.route('/tasks', methods=['GET'])
+@token_required
+def status_all(current_user):
+    max = request.args.get('max', default=None, type=int)
+    order = request.args.get('order', default=None, type=int)
+    
+    response = requests.get(TASKS_URL, headers=request.headers) 
+    if response.status_code != 200:
+        return jsonify({'error': 'Error al obtener la tarea'}), 500
+    return jsonify(response.json())   
+
+@app.route('/tasks/<task_id>', methods=['GET'])
+@token_required
+def status_id(current_user, task_id): 
+    response = requests.get(TASKS_URL+'/'+task_id, headers=request.headers)
+    if response.status_code != 200:
+        return jsonify({'error': 'Error al obtener la tarea'}), 500
+    
+    return jsonify(response.json()), 200
+
+    # Devolver la tarea obtenida correctamente
+
+
+@app.route('/tasks/<task_id>', methods=['DELETE'])
+@token_required
+def abort(current_user, task_id):
+    response = requests.delete(TASKS_URL+'/'+task_id, headers=request.headers)
+    if response.status_code != 200:
+        return jsonify({'error': 'Error al cancelar la tarea'}), 500
+    return jsonify({'result': 'Tarea cancelada correctamente'}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002)

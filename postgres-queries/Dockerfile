@@ -11,7 +11,8 @@ COPY . .
 COPY wait-for-it.sh .
 
 # Cambiar permisos para wait-for-it.sh
-RUN chmod +x wait-for-it.sh
+# RUN chmod +x wait-for-it.sh
 
 # Ejecutar wait-for-it.sh antes de iniciar la aplicación
-CMD ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]
+# CMD ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]
+CMD ["python", "app.py"]

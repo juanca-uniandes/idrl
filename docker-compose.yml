@@ -41,7 +41,7 @@ services:
         POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
       ports:
         - "8000:8000"
-      command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]
+      # command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]
       networks:
         - network
 
