@@ -13,13 +13,6 @@ from flask import Flask, request, jsonify
 broker_url = 'redis://redis:6379/0'
 app = Celery('tasks', backend='rpc://', broker=broker_url)
 
-# Obtener las variables de entorno
-DB_NAME = os.getenv("POSTGRES_DB")
-DB_USER = os.getenv("POSTGRES_USER")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = os.getenv("POSTGRES_HOST")
-DB_PORT = 5432
-
 UPLOAD_FOLDER = 'videos/uploads'
 UPLOAD_FOLDER_TO_PROCESSED_VIDEOS = 'videos/processed'
 ALLOWED_EXTENSIONS = {'mp4'}
@@ -217,10 +210,7 @@ def download_video_from_url(url, destination_path):
         print(f"An error occurred while downloading the video: {str(e)}")
         return None
 
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+@app.route('/worker/start', method=[GET])
 @app.task(bind=True)
 def process_video(self, url, current_user):
     task_id = self.request.id
@@ -228,3 +218,6 @@ def process_video(self, url, current_user):
     process_saved_video(task_id, file_path)
 
     return {'status': 'completado!', 'result': 100}
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5005)    
