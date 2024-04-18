@@ -1,0 +1,5 @@
+data/*
+video-mgmt/videos/uploads/*
+video-mgmt/videos/processed/*
+almacenar/videos/uploads/.gitkeep
+almacenar/videos/processed/*

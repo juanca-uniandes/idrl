@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+
+  # Apigateway
+  nginx:
+    image: nginx:latest
+    ports:
+      - "5050:5050"
+    volumes:
+        - ./api-gateway/nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro  # Actualiza la ruta al archivo nginx.conf
+    depends_on:
+      - video-mgmt
+    networks:
+      - network
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    networks:
+      - network
+
+  worker:
+    build:
+      context: worker
+    command: celery -A tasks worker --loglevel=info
+    volumes:
+      - ./worker:/app
+    depends_on:
+      - redis
+    networks:
+      - network
+
+  web-server:
+    build:
+      context: web-server
+    command: python app.py
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./autenticador:/app
+    depends_on:
+      - video-mgmt
+      - postgres-db
+    networks:
+      - network
+
+  almacenar:
+    container_name: almacenar
+    build:
+      context: almacenar
+    command: python app.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./almacenar:/app
+    depends_on:
+      - video-mgmt
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
