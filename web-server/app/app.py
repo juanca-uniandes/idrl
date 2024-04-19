@@ -28,7 +28,7 @@ def connect_db():
     )
 
 # URL del servidor que realiza las tareas
-TASKS_URL = 'http://video-mgmt:5004/tasks'
+TASKS_URL = 'http://worker:5004/tasks'
 
 #EXTENCION de los videos
 ALLOWED_EXTENSIONS = {'mp4'}
