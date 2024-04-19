@@ -6,7 +6,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - web-server_network
+      - network
 
   worker:
     build:
@@ -17,7 +17,7 @@ services:
     depends_on:
       - redis
     networks:
-      - web-server_network
+      - network
   
   tasks:
     build:
@@ -30,7 +30,7 @@ services:
     depends_on:
       - redis
     networks:
-      - web-server_network
+      - network
 
 networks:
   network:
