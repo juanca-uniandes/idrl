@@ -15,7 +15,7 @@ DB_NAME = os.getenv("POSTGRES_DB")
 DB_USER = os.getenv("POSTGRES_USER")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_HOST = os.getenv("POSTGRES_HOST")
-DB_PORT = 5432
+DB_PORT = 5433
 
 # Función para conectar a la base de datos PostgreSQL
 def connect_db():
@@ -23,7 +23,8 @@ def connect_db():
         dbname="idrl_db",
         user="idrl_user",
         password="idrl_2024",
-        host="postgres"
+        host="161.132.40.204",
+        port="5433"
     )
 
 # URL del servidor que realiza las tareas
