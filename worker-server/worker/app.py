@@ -54,7 +54,7 @@ def allowed_file(filename):
 
 # Rutas protegidas que requieren un token válido
 @app.route('/tasks', methods=['POST'])
-#@token_required
+@token_required
 def start(current_user):
     try:
         url = request.json['url']
