@@ -77,19 +77,6 @@ def process_saved_video(task_id, file_path):
             INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
         """
         runQuery(insertQuery, (video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, 1, datetime.now(), datetime.now()))
-
-        video_path_to_send = UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename
-        with open(video_path_to_send, 'rb') as file:
-            video_content = file.read()
-        file_content_base64 = base64.b64encode(video_content).decode('utf-8')
-        requests.post('http://almacenar:5001/upload',
-             json={
-                'file': file_content_base64,
-                'path_file': video_path_to_send
-             },
-             headers={'Content-Type': 'application/json'}
-        )
-        os.remove(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename)
     else:
         # Procesar por partes
         for i in range(0, int(total_duration), 20):
@@ -111,18 +98,18 @@ def process_saved_video(task_id, file_path):
             video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename, split_counter, datetime.now(), datetime.now()))
             split_counter += 1
 
-            video_path_to_send = UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename
-            with open(video_path_to_send, 'rb') as file:
-                video_content = file.read()
-            file_content_base64 = base64.b64encode(video_content).decode('utf-8')
-            requests.post('http://almacenar:5001/upload',
-              json={
-                  'file': file_content_base64,
-                  'path_file': video_path_to_send
-              },
-              headers={'Content-Type': 'application/json'}
-            )
-            os.remove(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename)
+            # video_path_to_send = UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename
+            # with open(video_path_to_send, 'rb') as file:
+            #     video_content = file.read()
+            # file_content_base64 = base64.b64encode(video_content).decode('utf-8')
+            # requests.post('http://almacenar:5001/upload',
+            #   json={
+            #       'file': file_content_base64,
+            #       'path_file': video_path_to_send
+            #   },
+            #   headers={'Content-Type': 'application/json'}
+            # )
+            # os.remove(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename)
     insertQuery = """
         INSERT INTO processing_videos(id_task, id_video, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
     """
@@ -151,28 +138,27 @@ def insert_video(task_id, url, current_user):
         task_id = task_id
 
         runQuery(insert_query,(video_name, path, user_id, duration, loaded_at, processed_at, video_url, task_id))
-        video_path_to_send = file.filename
-        with open(video_path_to_send, 'rb') as file:
-            video_content = file.read()
-        file_content_base64 = base64.b64encode(video_content).decode('utf-8')
-        requests.post('http://almacenar:5001/upload',
-          json={
-              'file': file_content_base64,
-              'path_file': video_path_to_send
-          },
-          headers={'Content-Type': 'application/json'}
-        )
+        # video_path_to_send = file.filename
+        # with open(video_path_to_send, 'rb') as file:
+        #     video_content = file.read()
+        # file_content_base64 = base64.b64encode(video_content).decode('utf-8')
+        # requests.post('http://almacenar:5001/upload',
+        #   json={
+        #       'file': file_content_base64,
+        #       'path_file': video_path_to_send
+        #   },
+        #   headers={'Content-Type': 'application/json'}
+        # )
         return video_name
     return None
 
 
 def runQuery(query, params=None):
     db_params = {
-        "dbname":"idrl_db",
-        "user":"idrl_user",
-        "password":"idrl_2024",
-        "host":"161.132.40.204",
-        "port":"5433"
+        'dbname': "idrl_db",
+        'user': "idrl_user",
+        'password': "idrl_2024",
+        'host': "postgres"
     }
 
     conn = psycopg2.connect(**db_params)
@@ -225,7 +211,11 @@ def allowed_file(filename):
 @app.task(bind=True)
 def process_video(self, url, current_user):
     task_id = self.request.id
+
+    if not allowed_file(url):
+        error_message = f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"
+        return {'error': error_message}
+
     file_path = insert_video(task_id, url, current_user)
     process_saved_video(task_id, file_path)
-
-    return {'status': 'completado!', 'result': 100}
+    return {'status': 'MODIFICADO', 'result': 100}
