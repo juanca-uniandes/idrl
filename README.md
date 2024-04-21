@@ -2,6 +2,8 @@
 Se ha desplegado en GCP una de base de datos y 3 maquinas virtuales en GCP las cuales se encuentran en el mismo segmento de red. En cada instancia se han desplegado los contenedores previamente desarrollados de modo que funcionen de manera independiente en cada maquina virtual.
 ![arquitectura](https://github.com/juanca-uniandes/idrl/assets/142269475/0e82739a-8f82-47a1-b301-47dcbaa1d8bd)
 
+### [Collection Postman](https://github.com/juanca-uniandes/idrl/blob/main/CLOUD%20VIDEOS%20MGMT.postman_collection.json)
+
 La distribucion de los componentes se detalla a continuacion:
 
 - **Web-Server:**
