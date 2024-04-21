@@ -158,7 +158,8 @@ def runQuery(query, params=None):
         'dbname': "idrl_db",
         'user': "idrl_user",
         'password': "idrl_2024",
-        'host': "postgres"
+        'host': "161.132.40.204",
+	'port': "5433"
     }
 
     conn = psycopg2.connect(**db_params)

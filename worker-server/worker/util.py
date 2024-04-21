@@ -7,8 +7,9 @@ def fn_info_tasks(max, order):
         'dbname': "idrl_db",
         'user': "idrl_user",
         'password': "idrl_2024",
-        'host': "postgres"
-    }
+        'host': "161.132.40.204",
+        'port': "5433"
+  	 }
     try:
         # Conexión a la base de datos PostgreSQL
         conn = psycopg2.connect(**db_params)
@@ -36,7 +37,8 @@ def fn_info_task(id_task):
         'dbname': "idrl_db",
         'user': "idrl_user",
         'password': "idrl_2024",
-        'host': "postgres"
+        'host': "161.132.40.204",
+        'port': "5433"
     }
     try:
         # Conexión a la base de datos PostgreSQL
@@ -65,7 +67,8 @@ def fn_path_video(id_task):
         'dbname': "idrl_db",
         'user': "idrl_user",
         'password': "idrl_2024",
-        'host': "postgres"
+        'host': "161.132.40.204",
+        'port': "5433"
     }
     try:
         # Conexión a la base de datos PostgreSQL
@@ -94,7 +97,8 @@ def fn_path_split_video(id_task):
         'dbname': "idrl_db",
         'user': "idrl_user",
         'password': "idrl_2024",
-        'host': "postgres"
+        'host': "161.132.40.204",
+        'port': "5433"
     }
     try:
         # Conexión a la base de datos PostgreSQL
