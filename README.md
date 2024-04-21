@@ -2,8 +2,6 @@
 Se ha desplegado en GCP una de base de datos y 3 maquinas virtuales en GCP las cuales se encuentran en el mismo segmento de red. En cada instancia se han desplegado los contenedores previamente desarrollados de modo que funcionen de manera independiente en cada maquina virtual.
 ![arquitectura](https://github.com/juanca-uniandes/idrl/assets/142269475/0e82739a-8f82-47a1-b301-47dcbaa1d8bd)
 
-### [Collection Postman](https://github.com/juanca-uniandes/idrl/blob/main/CLOUD%20VIDEOS%20MGMT.postman_collection.json)
-
 La distribucion de los componentes se detalla a continuacion:
 
 - **Web-Server:**
@@ -96,15 +94,14 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
       ```
 
 
-      - **Cloud SQL**
-      *VALIDAR Y MODIFICAR*
+      - **Cloud SQL
   - Consideraciones: Si el sistema operativo es Windows, debes reemplazar la línea `CMD ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]` por `CMD ["python", "app.py"]`, y comentar la linea `RUN chmod +x wait-for-it.sh`  en el archivo `postgres-queries/Dockerfile`, adicional tambien debes comentar la linea `command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]` en el archivo `docker-compose.yml`. Luego, ejecuta nuevamente el contenedor `postgres-queries` después de que `docker-compose up` haya finalizado todo el despliegue. Esta consideración no es necesaria en sistemas operativos como Ubuntu y macOS.
   - Para que la el web-server y el worker-server enlacen con la base de datos local, se debe entrar a los archivos `.env` ubicados en las carpetas `web-server`,`worker-server`, remplazar el host por `postgres` y el port por `5432`
 
-    - **file-server**
-    ***incluir instalacion del file server***
 
     
+
+### [Collection Postman](https://github.com/juanca-uniandes/idrl/blob/main/CLOUD%20VIDEOS%20MGMT.postman_collection.json)
   - **Verificar el despliegue:**
   - Todos los endpoints que se detallan a continuación requieren el encabezado `Content-Type: application/json`:
 
