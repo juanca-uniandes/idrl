@@ -1,3 +1,22 @@
+### Arquitectura
+Se ha desplegado en GCP una de base de datos y 3 maquinas virtuales en GCP las cuales se encuentran en el mismo segmento de red. En cada instancia se han desplegado los contenedores previamente desarrollados de modo que funcionen de manera independiente en cada maquina virtual.
+![arquitectura](https://github.com/juanca-uniandes/idrl/assets/142269475/0e82739a-8f82-47a1-b301-47dcbaa1d8bd)
+
+La distribucion de los componentes se detalla a continuacion:
+
+- **Web-Server:**
+    - Contenedor Nginx: Configurado como un proxy, para atender las peticiones del usuario,
+    - Autorization: Su labor principal es autenticar al usuario con el proposito de proteger a los endpoins que deban estar autorizados.
+- **Worker-Server:**
+    - Worker: Lleva a cabo la tarea mas "pesada" del sistema, el procesamiento de videos
+    - Tasks: Se ocupa de tareas mas livianas, llevadas a cabo de manera sincrona, por ejemplo consultar el estado de una tarea.
+    - Redis: Cola de mensajes para llevar a cado las tareas asincronas.
+- **File Server:**
+Se encarga de almacenar los videos descargados y procesados
+
+- **Cloud SQL:**
+Instancia de base de datos en Postgres
+
 ### Tecnologías asociadas
 - Docker
 - Flask
@@ -5,6 +24,12 @@
 - Celery
 - PostgreSQL
 - JMeter
+
+### Almacenamiento de archivos:
+- En el File Server se ha compartido el folder "/var/nfs/shared_folder"
+- Los contenedores que desean escribir en ese folder compartido deben mapear un volumen hacia el folder "/usr/remote_folder" del sistema de archivos de maquina anfitriona
+- El folder "/usr/remote_folder" de la maquina "worker-server", se ha configurado previamente para mapear el contenido compartido en "/var/nfs/shared_folder" del "File Server".
+![file_server](https://github.com/juanca-uniandes/idrl/assets/142269475/63a1c7c8-1dcb-4a92-b710-a1e070d21303)
 
 ### Pasos para el despliegue del proyecto en Ambiente Cloud GCP
 
