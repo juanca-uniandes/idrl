@@ -14,7 +14,7 @@ services:
     command: celery -A tasks worker --loglevel=info
     volumes:
       - ./worker:/app
-       - /usr/remote_folder:/app/videos
+      - ./remote_folder/videos:/app/videos
     depends_on:
       - redis
     networks:
@@ -28,7 +28,7 @@ services:
       - "5004:5004"
     volumes:
       - ./worker:/app
-       - /usr/remote_folder:/app/videos
+      - ./remote_folder/videos:/app/videos
     depends_on:
       - redis
     networks:
