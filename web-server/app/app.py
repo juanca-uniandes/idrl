@@ -3,8 +3,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import jwt
 import datetime
+import random
 import psycopg2
 import requests
+import time
 import os
 import re
 
@@ -33,6 +35,13 @@ TASKS_URL = 'http://10.128.0.3:5004/tasks'
 #EXTENCION de los videos
 ALLOWED_EXTENSIONS = {'mp4'}
 
+#### Pruebas nginx y JWT ####
+@app.route('/tasks/ok')
+def index():
+    random_value = random.uniform(0, 0.5)
+    time.sleep(random_value)
+    return 'OK OK OK!'
+#### ELIMINAR DESPUES DE VALIDADO ####
 
 # Función de decorador para validar el token JWT
 def token_required(f):
