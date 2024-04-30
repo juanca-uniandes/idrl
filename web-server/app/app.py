@@ -35,7 +35,7 @@ TASKS_URL = 'http://10.128.0.3:5004/tasks'
 #EXTENCION de los videos
 ALLOWED_EXTENSIONS = {'mp4'}
 
-@app.route('/tasks/ok')
+@app.route('/')
 def index():
     random_value = random.uniform(0, 0.5)
     time.sleep(random_value)
