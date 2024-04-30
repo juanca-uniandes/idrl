@@ -41,8 +41,9 @@ def index():
     time.sleep(random_value)
     return 'BASE OK OK OK!'
 #### Pruebas nginx y JWT ####
+
 @app.route('/tasks/ok')
-def index():
+def indextasks():
     random_value = random.uniform(0, 0.5)
     time.sleep(random_value)
     return 'TASKS OK OK OK!'
