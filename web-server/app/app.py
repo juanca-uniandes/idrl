@@ -35,12 +35,17 @@ TASKS_URL = 'http://10.128.0.3:5004/tasks'
 #EXTENCION de los videos
 ALLOWED_EXTENSIONS = {'mp4'}
 
+@app.route('/tasks/ok')
+def index():
+    random_value = random.uniform(0, 0.5)
+    time.sleep(random_value)
+    return 'BASE OK OK OK!'
 #### Pruebas nginx y JWT ####
 @app.route('/tasks/ok')
 def index():
     random_value = random.uniform(0, 0.5)
     time.sleep(random_value)
-    return 'OK OK OK!'
+    return 'TASKS OK OK OK!'
 #### ELIMINAR DESPUES DE VALIDADO ####
 
 # Función de decorador para validar el token JWT
