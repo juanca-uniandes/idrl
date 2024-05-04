@@ -312,6 +312,8 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
 - **Tipo de Condición:** Ausencia de Métrica (Metric absence)
 - **Activador de la Alerta:** La alerta se activa si no se reciben datos para la métrica durante un período de 1 hora.
 - **Conclusión:** Esta política permite monitorear la capacidad de servicio del sistema y recibir notificaciones si no se reciben datos durante un período de 1 hora, lo que puede indicar un problema en la recolección de datos o en la comunicación entre los componentes del sistema.
+![image](https://github.com/juanca-uniandes/idrl/assets/142238841/1f3f1fc6-0b30-42d9-8d83-5688ff7ea354)
+
 
 ## Grupo de Instancias - Tamaño del grupo por encima de 4 instancias en 1 hora
 
