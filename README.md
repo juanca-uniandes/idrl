@@ -331,14 +331,14 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
 - **Umbral:** 90%
 - **Conclusión:** Esta política se enfoca en el uso actual del escalador automático y activa la alerta si se detecta excesivo de recursos durante un tiempo prolongado (30 minutos), lo que indicaría una posible necesidad de ajuste en la configuración de escalado para garantizar un rendimiento óptimo del sistema.
 
-## Monitoreo a través de gráficos
+# Monitoreo a través de gráficos
 
 - Gráfico de Capacidad de servicio
 - Gráfico de Utilización actual del Autoscaler
 - Gráfico de Tamaño del grupo de instancias
   ![image](https://github.com/juanca-uniandes/idrl/assets/142238841/92a74e11-9762-4217-b6bb-b3f1b8b0ca74)
 
-## Verificaciones de tiempo de actividad
+# Monitoreo a través de Verificaciones de tiempo de actividad
 
 - **Verificación de la salud de los servidores en el balanceador de carga en la nube**
   - **Protocolo:** HTTP
