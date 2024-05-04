@@ -286,7 +286,7 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
 
-    # Monitoreo a través de políticas
+# Monitoreo a través de políticas
 
 ## Autoscaler - Utilización actual del Autoscaler por encima del 75% en 5 minutos
 
@@ -331,10 +331,10 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
 
 ## Monitoreo a través de gráficos
 
-- [Enlace al Dashboard de Google Cloud Monitoring](https://console.cloud.google.com/monitoring/dashboards/builder/ff0d7361-2429-4774-9f5c-60b059bb8aaa;duration=PT1H?project=web-server-420612)
 - Gráfico de Capacidad de servicio
 - Gráfico de Utilización actual del Autoscaler
 - Gráfico de Tamaño del grupo de instancias
+  ![image](https://github.com/juanca-uniandes/idrl/assets/142238841/92a74e11-9762-4217-b6bb-b3f1b8b0ca74)
 
 ## Verificaciones de tiempo de actividad
 
