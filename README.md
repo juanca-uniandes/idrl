@@ -1,6 +1,8 @@
 ## Arquitectura
 Se ha desplegado en GCP una de base de datos y 3 maquinas virtuales en GCP las cuales se encuentran en el mismo segmento de red. En cada instancia se han desplegado los contenedores previamente desarrollados de modo que funcionen de manera independiente en cada maquina virtual.
-![image](https://github.com/juanca-uniandes/idrl/assets/142316997/5ae0adeb-1448-42b3-a513-5c7294dc6e3c)
+
+![image](https://github.com/juanca-uniandes/idrl/assets/142316997/f26aa9ba-cdd8-4b99-a0ff-8c33e5af70fc)
+
 
 
 La distribucion de los componentes se detalla a continuacion:
@@ -19,9 +21,10 @@ La distribucion de los componentes se detalla a continuacion:
     - Redis: Cola de mensajes para llevar a cado las tareas asincronas.
 - **Cloud Storage::**
 Se encarga de almacenar los videos descargados y procesados
-
 - **Cloud SQL:**
 Instancia de base de datos en Postgres
+- **Monitoring:**
+Atravez de politas monitorea los servicios del autoscaling, grupo de instancias segun varios parametros y de forma grafica.
 
 ### Tecnologías asociadas
 - Docker
@@ -290,6 +293,69 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
 ** Para reinstalar debes volver a realizar el punto 6 del autoscaling y el punto 1 de load balancing. 
 
 
+# Monitoreo a través de políticas
+
+## Autoscaler - Utilización actual del Autoscaler por encima del 75% en 5 minutos
+
+- **Nombre de la condición:** Autoscaler - Utilización actual del Autoscaler
+- **Descripción:** Esta política monitorea la utilización actual del escalador automático. La alerta se activa si la utilización actual supera el umbral del 75% durante un período de 5 minutos. Esto indica que la carga de trabajo actual está utilizando más recursos de los que se considera óptimo.
+- **Métrica:** Utiliza la métrica de utilización actual del escalador automático.
+- **Umbral:** 75%
+- **Conclusión:** Esta política se enfoca en el uso actual del escalador automático y activa la alerta si se detecta un uso excesivo de recursos durante un tiempo prolongado.
+
+## Autoscaler - Capacidad de servicio por encima del 75% en 5 minutos
+
+- **Nombre de la condición:** Autoscaler - Capacidad de servicio
+- **Descripción:** Esta política monitorea la capacidad de servicio del sistema. La alerta se activa si la capacidad de servicio supera el 75% durante un período de 5 minutos. Esto indica que la capacidad del sistema está siendo sobrepasada por la carga de trabajo actual.
+- **Métrica:** Utiliza la métrica de capacidad de servicio del sistema.
+- **Umbral:** 75%
+- **Conclusión:** Esta política se enfoca en la capacidad de servicio del sistema y activa la alerta si se detecta que la carga de trabajo actual está superando la capacidad máxima que el sistema puede manejar eficientemente durante un período de tiempo prolongado.
+
+## Autoscaler - Capacidad de servicio cuando no hay datos durante un periodo específico
+
+- **Nombre de la condición:** Autoscaler - Capacidad de servicio
+- **Descripción:** Esta política monitorea la capacidad de servicio del sistema. La alerta se activa si no se reciben datos para la métrica durante un período de 1 hora. Esto puede indicar un problema con la recolección de datos o una falta de comunicación entre los componentes del sistema.
+- **Métrica:** Utiliza la métrica "autoscaler.googleapis.com/capacity", que proporciona información sobre la capacidad de servicio del sistema.
+- **Tipo de Condición:** Ausencia de Métrica (Metric absence)
+- **Activador de la Alerta:** La alerta se activa si no se reciben datos para la métrica durante un período de 1 hora.
+- **Conclusión:** Esta política permite monitorear la capacidad de servicio del sistema y recibir notificaciones si no se reciben datos durante un período de 1 hora, lo que puede indicar un problema en la recolección de datos o en la comunicación entre los componentes del sistema.
+![image](https://github.com/juanca-uniandes/idrl/assets/142238841/1f3f1fc6-0b30-42d9-8d83-5688ff7ea354)
+
+
+## Grupo de Instancias - Tamaño del grupo por encima de 4 instancias en 1 hora
+
+- **Descripción:** Esta política de alerta monitorea el tamaño del grupo de instancias en Google Cloud Platform (GCP), notificando si el número de máquinas virtuales (VMs) en el grupo excede 4 instancias en cualquier momento dentro de un período de 1 hora.
+- **Métrica:** Utiliza la métrica compute.googleapis.com/instance_group/size, que proporciona información sobre el tamaño del grupo de instancias.
+- **Tipo de Recurso:** Está asociada con el recurso instance_group, lo que significa que se aplica a los grupos de instancias en GCP.
+- **Umbral:** El umbral está configurado en 4 instancias.
+- **Conclusión:** Esta política permite monitorear el tamaño del grupo de instancias en Google Cloud Platform (GCP). Si en cualquier momento dentro de un período de 1 hora hay 4 o más instancias en el grupo, se activará la alerta.
+
+## Autoscaler - Utilización actual del Autoscaler por encima del 90% en 30 minutos
+
+- **Nombre de la condición:** Autoscaler - Utilización actual del Autoscaler
+- **Descripción:** Esta política monitorea la utilización actual del escalador automático. La alerta se activa si la utilización actual supera el umbral del 90% durante un período de 30 minutos. Esto indica que la carga de trabajo actual está utilizando más recursos de los que se considera óptimo y está llegando a su límite.
+- **Métrica:** Utiliza la métrica de utilización actual del escalador automático.
+- **Umbral:** 90%
+- **Conclusión:** Esta política se enfoca en el uso actual del escalador automático y activa la alerta si se detecta excesivo de recursos durante un tiempo prolongado (30 minutos), lo que indicaría una posible necesidad de ajuste en la configuración de escalado para garantizar un rendimiento óptimo del sistema.
+
+# Monitoreo a través de gráficos
+
+- Gráfico de Capacidad de servicio
+- Gráfico de Utilización actual del Autoscaler
+- Gráfico de Tamaño del grupo de instancias
+  ![image](https://github.com/juanca-uniandes/idrl/assets/142238841/92a74e11-9762-4217-b6bb-b3f1b8b0ca74)
+
+# Monitoreo a través de Verificaciones de tiempo de actividad
+
+- **Verificación de la salud de los servidores en el balanceador de carga en la nube**
+  - **Protocolo:** HTTP
+  - **Tipo de recurso:** URL
+  - **Hostname:** 34.36.153.134
+  - **Frecuencia de la verificación:** 1 minuto
+  - **Tiempo de espera de respuesta:** 10 segundos
+  - **Registrar fallos de verificación:** Verdadero
+  - **Código de respuesta HTTP aceptable:** 2XX
+- **Conclusión:** La implementación de una alerta de verificación de latencia con la configuración detallada proporciona un monitoreo casi en tiempo real de la disponibilidad de los servidores. Esto permite una detección temprana de problemas, una respuesta oportuna y, en última instancia, mejora la confiabilidad del sistema al garantizar que los servidores respondan correctamente.
 
     
 
@@ -478,67 +544,4 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
 
-# Monitoreo a través de políticas
-
-## Autoscaler - Utilización actual del Autoscaler por encima del 75% en 5 minutos
-
-- **Nombre de la condición:** Autoscaler - Utilización actual del Autoscaler
-- **Descripción:** Esta política monitorea la utilización actual del escalador automático. La alerta se activa si la utilización actual supera el umbral del 75% durante un período de 5 minutos. Esto indica que la carga de trabajo actual está utilizando más recursos de los que se considera óptimo.
-- **Métrica:** Utiliza la métrica de utilización actual del escalador automático.
-- **Umbral:** 75%
-- **Conclusión:** Esta política se enfoca en el uso actual del escalador automático y activa la alerta si se detecta un uso excesivo de recursos durante un tiempo prolongado.
-
-## Autoscaler - Capacidad de servicio por encima del 75% en 5 minutos
-
-- **Nombre de la condición:** Autoscaler - Capacidad de servicio
-- **Descripción:** Esta política monitorea la capacidad de servicio del sistema. La alerta se activa si la capacidad de servicio supera el 75% durante un período de 5 minutos. Esto indica que la capacidad del sistema está siendo sobrepasada por la carga de trabajo actual.
-- **Métrica:** Utiliza la métrica de capacidad de servicio del sistema.
-- **Umbral:** 75%
-- **Conclusión:** Esta política se enfoca en la capacidad de servicio del sistema y activa la alerta si se detecta que la carga de trabajo actual está superando la capacidad máxima que el sistema puede manejar eficientemente durante un período de tiempo prolongado.
-
-## Autoscaler - Capacidad de servicio cuando no hay datos durante un periodo específico
-
-- **Nombre de la condición:** Autoscaler - Capacidad de servicio
-- **Descripción:** Esta política monitorea la capacidad de servicio del sistema. La alerta se activa si no se reciben datos para la métrica durante un período de 1 hora. Esto puede indicar un problema con la recolección de datos o una falta de comunicación entre los componentes del sistema.
-- **Métrica:** Utiliza la métrica "autoscaler.googleapis.com/capacity", que proporciona información sobre la capacidad de servicio del sistema.
-- **Tipo de Condición:** Ausencia de Métrica (Metric absence)
-- **Activador de la Alerta:** La alerta se activa si no se reciben datos para la métrica durante un período de 1 hora.
-- **Conclusión:** Esta política permite monitorear la capacidad de servicio del sistema y recibir notificaciones si no se reciben datos durante un período de 1 hora, lo que puede indicar un problema en la recolección de datos o en la comunicación entre los componentes del sistema.
-![image](https://github.com/juanca-uniandes/idrl/assets/142238841/1f3f1fc6-0b30-42d9-8d83-5688ff7ea354)
-
-
-## Grupo de Instancias - Tamaño del grupo por encima de 4 instancias en 1 hora
-
-- **Descripción:** Esta política de alerta monitorea el tamaño del grupo de instancias en Google Cloud Platform (GCP), notificando si el número de máquinas virtuales (VMs) en el grupo excede 4 instancias en cualquier momento dentro de un período de 1 hora.
-- **Métrica:** Utiliza la métrica compute.googleapis.com/instance_group/size, que proporciona información sobre el tamaño del grupo de instancias.
-- **Tipo de Recurso:** Está asociada con el recurso instance_group, lo que significa que se aplica a los grupos de instancias en GCP.
-- **Umbral:** El umbral está configurado en 4 instancias.
-- **Conclusión:** Esta política permite monitorear el tamaño del grupo de instancias en Google Cloud Platform (GCP). Si en cualquier momento dentro de un período de 1 hora hay 4 o más instancias en el grupo, se activará la alerta.
-
-## Autoscaler - Utilización actual del Autoscaler por encima del 90% en 30 minutos
-
-- **Nombre de la condición:** Autoscaler - Utilización actual del Autoscaler
-- **Descripción:** Esta política monitorea la utilización actual del escalador automático. La alerta se activa si la utilización actual supera el umbral del 90% durante un período de 30 minutos. Esto indica que la carga de trabajo actual está utilizando más recursos de los que se considera óptimo y está llegando a su límite.
-- **Métrica:** Utiliza la métrica de utilización actual del escalador automático.
-- **Umbral:** 90%
-- **Conclusión:** Esta política se enfoca en el uso actual del escalador automático y activa la alerta si se detecta excesivo de recursos durante un tiempo prolongado (30 minutos), lo que indicaría una posible necesidad de ajuste en la configuración de escalado para garantizar un rendimiento óptimo del sistema.
-
-# Monitoreo a través de gráficos
-
-- Gráfico de Capacidad de servicio
-- Gráfico de Utilización actual del Autoscaler
-- Gráfico de Tamaño del grupo de instancias
-  ![image](https://github.com/juanca-uniandes/idrl/assets/142238841/92a74e11-9762-4217-b6bb-b3f1b8b0ca74)
-
-# Monitoreo a través de Verificaciones de tiempo de actividad
-
-- **Verificación de la salud de los servidores en el balanceador de carga en la nube**
-  - **Protocolo:** HTTP
-  - **Tipo de recurso:** URL
-  - **Hostname:** 34.36.153.134
-  - **Frecuencia de la verificación:** 1 minuto
-  - **Tiempo de espera de respuesta:** 10 segundos
-  - **Registrar fallos de verificación:** Verdadero
-  - **Código de respuesta HTTP aceptable:** 2XX
-- **Conclusión:** La implementación de una alerta de verificación de latencia con la configuración detallada proporciona un monitoreo casi en tiempo real de la disponibilidad de los servidores. Esto permite una detección temprana de problemas, una respuesta oportuna y, en última instancia, mejora la confiabilidad del sistema al garantizar que los servidores respondan correctamente.
 
