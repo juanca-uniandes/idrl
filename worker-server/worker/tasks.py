@@ -8,17 +8,17 @@ from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip
 import requests
 import base64
 from flask import Flask, request, jsonify
-
+from util import upload_to_gcs, delete_from_gcs
 
 broker_url = 'redis://redis:6379/0'
 app = Celery('tasks', backend='rpc://', broker=broker_url)
 
 # Obtener las variables de entorno
-DB_NAME = os.getenv("POSTGRES_DB")
-DB_USER = os.getenv("POSTGRES_USER")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = os.getenv("POSTGRES_HOST")
-DB_PORT = 5432
+DB_NAME = "idrl_db"
+DB_USER = "idrl_user"
+DB_PASSWORD = "idrl_2024"
+DB_HOST = "161.132.40.204"
+DB_PORT = 5433
 
 UPLOAD_FOLDER = 'videos/uploads'
 UPLOAD_FOLDER_TO_PROCESSED_VIDEOS = 'videos/processed'
@@ -72,11 +72,15 @@ def process_saved_video(task_id, file_path):
         processed_video = shorten_video_duration(original_video, 0, total_duration)
         processed_video = add_logo_to_video(processed_video)
         processed_video = resize_video_to_16_9(processed_video)
-        save_processed_video(processed_video, filename)
+        processed_video_path = save_processed_video(processed_video, filename)
         insertQuery = """
             INSERT INTO split_videos(id_video, split_path, _order, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
         """
         runQuery(insertQuery, (video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + filename, 1, datetime.now(), datetime.now()))
+
+        # subir al bucket
+        upload_to_gcs(processed_video_path, UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename)
+
     else:
         # Procesar por partes
         for i in range(0, int(total_duration), 20):
@@ -87,7 +91,7 @@ def process_saved_video(task_id, file_path):
             # Generate filename with start time
             clip_filename = os.path.splitext(filename)[0] + f'_part_{split_counter}.mp4'
 
-            save_processed_video(processed_clip, clip_filename)
+            processed_video_path = save_processed_video(processed_clip, clip_filename)
 
             # Increment start_time
             start_time += 20
@@ -98,18 +102,8 @@ def process_saved_video(task_id, file_path):
             video_info['id'], UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename, split_counter, datetime.now(), datetime.now()))
             split_counter += 1
 
-            # video_path_to_send = UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename
-            # with open(video_path_to_send, 'rb') as file:
-            #     video_content = file.read()
-            # file_content_base64 = base64.b64encode(video_content).decode('utf-8')
-            # requests.post('http://almacenar:5001/upload',
-            #   json={
-            #       'file': file_content_base64,
-            #       'path_file': video_path_to_send
-            #   },
-            #   headers={'Content-Type': 'application/json'}
-            # )
-            # os.remove(UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename)
+            # subir al bucket
+            upload_to_gcs(processed_video_path, UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename)
     insertQuery = """
         INSERT INTO processing_videos(id_task, id_video, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
     """
@@ -126,6 +120,7 @@ def insert_video(task_id, url, current_user):
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     file_path = download_video_from_url(url, UPLOAD_FOLDER)
+
     if file_path:
         file = VideoFileClip(file_path)
         video_name = file.filename.replace('videos/uploads/', '')
@@ -138,28 +133,19 @@ def insert_video(task_id, url, current_user):
         task_id = task_id
 
         runQuery(insert_query,(video_name, path, user_id, duration, loaded_at, processed_at, video_url, task_id))
-        # video_path_to_send = file.filename
-        # with open(video_path_to_send, 'rb') as file:
-        #     video_content = file.read()
-        # file_content_base64 = base64.b64encode(video_content).decode('utf-8')
-        # requests.post('http://almacenar:5001/upload',
-        #   json={
-        #       'file': file_content_base64,
-        #       'path_file': video_path_to_send
-        #   },
-        #   headers={'Content-Type': 'application/json'}
-        # )
+        # subir al bucket
+        upload_to_gcs(file_path, path)
         return video_name
     return None
 
 
 def runQuery(query, params=None):
     db_params = {
-        'dbname': "idrl_db",
-        'user': "idrl_user",
-        'password': "idrl_2024",
-        'host': "161.132.40.204",
-	'port': "5433"
+        'dbname': DB_NAME,
+        'user': DB_USER,
+         'password': DB_PASSWORD,
+        'host': DB_HOST,
+        'port': DB_PORT
     }
 
     conn = psycopg2.connect(**db_params)
@@ -219,4 +205,5 @@ def process_video(self, url, current_user):
 
     file_path = insert_video(task_id, url, current_user)
     process_saved_video(task_id, file_path)
+    # escribir_archivo()
     return {'status': 'MODIFICADO', 'result': 100}

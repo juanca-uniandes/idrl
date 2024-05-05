@@ -1,13 +1,13 @@
 {
 	"info": {
-		"_postman_id": "ef7f9fd3-8322-4774-a5a9-94217dfaaf8b",
+		"_postman_id": "3e51f79b-99ca-4bdc-a253-309e8f3d1b22",
 		"name": "CLOUD VIDEOS MGMT",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "31254157"
+		"_exporter_id": "1387693"
 	},
 	"item": [
 		{
-			"name": "http://35.188.146.213:5050/auth/signup",
+			"name": "signup",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -27,15 +27,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://35.188.146.213:5050/auth/signup",
+					"raw": "http://34.36.153.134/auth/signup",
 					"protocol": "http",
 					"host": [
-						"35",
-						"188",
-						"146",
-						"213"
+						"34",
+						"36",
+						"153",
+						"134"
 					],
-					"port": "5050",
 					"path": [
 						"auth",
 						"signup"
@@ -46,7 +45,7 @@
 			"response": []
 		},
 		{
-			"name": "http://35.188.146.213:5050/auth/login",
+			"name": "login",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -66,15 +65,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://35.188.146.213:5050/auth/login",
+					"raw": "http://34.36.153.134/auth/login",
 					"protocol": "http",
 					"host": [
-						"35",
-						"188",
-						"146",
-						"213"
+						"34",
+						"36",
+						"153",
+						"134"
 					],
-					"port": "5050",
 					"path": [
 						"auth",
 						"login"
@@ -85,14 +83,14 @@
 			"response": []
 		},
 		{
-			"name": "http://35.188.146.213:5050/tasks",
+			"name": "Iniciar proceso de video",
 			"request": {
 				"auth": {
 					"type": "bearer",
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0LCJleHAiOjE3MTM3MzQ0MzJ9.tMlulzxiXdoU3YWq7WrtZWAE6E6fYa_xtf1eREppmJI",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTQ3ODI3NTh9.I50v8JE39xxaQJEMrNxxpZIuJikDKYOy1mqyGfZe_Jc",
 							"type": "string"
 						}
 					]
@@ -115,15 +113,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://35.188.146.213:5050/tasks",
+					"raw": "http://34.36.153.134/tasks",
 					"protocol": "http",
 					"host": [
-						"35",
-						"188",
-						"146",
-						"213"
+						"34",
+						"36",
+						"153",
+						"134"
 					],
-					"port": "5050",
 					"path": [
 						"tasks"
 					]
@@ -133,7 +130,7 @@
 			"response": []
 		},
 		{
-			"name": "http://35.188.146.213:5050/tasks",
+			"name": "Obtener registros de procesos",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -155,15 +152,14 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "http://35.188.146.213:5050/tasks",
+					"raw": "http://34.36.153.134/tasks",
 					"protocol": "http",
 					"host": [
-						"35",
-						"188",
-						"146",
-						"213"
+						"34",
+						"36",
+						"153",
+						"134"
 					],
-					"port": "5050",
 					"path": [
 						"tasks"
 					]
@@ -173,7 +169,7 @@
 			"response": []
 		},
 		{
-			"name": "http://35.188.146.213:5050/tasks/9d2f66a6-89fd-41ec-a4b6-4a16701a9abd",
+			"name": "obtener estado de un proceso",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -202,15 +198,14 @@
 					"formdata": []
 				},
 				"url": {
-					"raw": "http://35.188.146.213:5050/tasks/9d2f66a6-89fd-41ec-a4b6-4a16701a9abd",
+					"raw": "http://34.36.153.134/tasks/9d2f66a6-89fd-41ec-a4b6-4a16701a9abd",
 					"protocol": "http",
 					"host": [
-						"35",
-						"188",
-						"146",
-						"213"
+						"34",
+						"36",
+						"153",
+						"134"
 					],
-					"port": "5050",
 					"path": [
 						"tasks",
 						"9d2f66a6-89fd-41ec-a4b6-4a16701a9abd"
@@ -221,7 +216,7 @@
 			"response": []
 		},
 		{
-			"name": "http://35.188.146.213:5050/tasks/9d2f66a6-89fd-41ec-a4b6-4a16701a9abd",
+			"name": "cancelar y eliminar el proceso",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -242,15 +237,14 @@
 					}
 				],
 				"url": {
-					"raw": "http://35.188.146.213:5050/tasks/9d2f66a6-89fd-41ec-a4b6-4a16701a9abd",
+					"raw": "http://34.36.153.134/tasks/9d2f66a6-89fd-41ec-a4b6-4a16701a9abd",
 					"protocol": "http",
 					"host": [
-						"35",
-						"188",
-						"146",
-						"213"
+						"34",
+						"36",
+						"153",
+						"134"
 					],
-					"port": "5050",
 					"path": [
 						"tasks",
 						"9d2f66a6-89fd-41ec-a4b6-4a16701a9abd"

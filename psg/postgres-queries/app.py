@@ -120,7 +120,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY 
-		SELECT v."path" as path_video
+		SELECT DISTINCT v."path" as path_video
 		FROM processing_videos pv
 			join videos v on v.id = pv.id_video  
 		where  pv.id_task = _task_id;
@@ -136,7 +136,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY 
-		SELECT v.split_path as path_video
+		SELECT DISTINCT v.split_path as path_video
 		FROM processing_videos pv
 			join split_videos v on v.id_video   = pv.id_video  
 		where  pv.id_task =  _task_id;
