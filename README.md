@@ -1,9 +1,15 @@
-### Arquitectura
+## Arquitectura
 Se ha desplegado en GCP una de base de datos y 3 maquinas virtuales en GCP las cuales se encuentran en el mismo segmento de red. En cada instancia se han desplegado los contenedores previamente desarrollados de modo que funcionen de manera independiente en cada maquina virtual.
-![arquitectura](https://github.com/juanca-uniandes/idrl/assets/142269475/0e82739a-8f82-47a1-b301-47dcbaa1d8bd)
+![image](https://github.com/juanca-uniandes/idrl/assets/142316997/5ae0adeb-1448-42b3-a513-5c7294dc6e3c)
+
 
 La distribucion de los componentes se detalla a continuacion:
-
+- **Load Balancing:**
+    - Configuracion de distribucion de cargas para los servidores del web-server configurados en el autoscaling.
+    - Distribulle 50 solicitudes por instancia.
+- **Autoscaling:**
+    - Crea multiples instancias del web-server con base en Métricas de ajuste de escala automático: Uso del balanceo de cargas de HTTP: 75%.
+    - Crea entre minimo 1 instancia y 5 instancias.
 - **Web-Server:**
     - Contenedor Nginx: Configurado como un proxy, para atender las peticiones del usuario,
     - Autorization: Su labor principal es autenticar al usuario con el proposito de proteger a los endpoins que deban estar autorizados.
@@ -11,7 +17,7 @@ La distribucion de los componentes se detalla a continuacion:
     - Worker: Lleva a cabo la tarea mas "pesada" del sistema, el procesamiento de videos
     - Tasks: Se ocupa de tareas mas livianas, llevadas a cabo de manera sincrona, por ejemplo consultar el estado de una tarea.
     - Redis: Cola de mensajes para llevar a cado las tareas asincronas.
-- **File Server:**
+- **Cloud Storage::**
 Se encarga de almacenar los videos descargados y procesados
 
 - **Cloud SQL:**
@@ -25,78 +31,264 @@ Instancia de base de datos en Postgres
 - PostgreSQL
 - JMeter
 
-### Almacenamiento de archivos:
-- En el File Server se ha compartido el folder "/var/nfs/shared_folder"
-- Los contenedores que desean escribir en ese folder compartido deben mapear un volumen hacia el folder "/usr/remote_folder" del sistema de archivos de maquina anfitriona
-- El folder "/usr/remote_folder" de la maquina "worker-server", se ha configurado previamente para mapear el contenido compartido en "/var/nfs/shared_folder" del "File Server".
-![file_server](https://github.com/juanca-uniandes/idrl/assets/142269475/63a1c7c8-1dcb-4a92-b710-a1e070d21303)
-
-### Pasos para el despliegue del proyecto en Ambiente Cloud GCP
-
-- **GCP**
-En GCP debemos generar un proyecto y seleccionarlo, seguido a eso entramos a *Compute Engine* donde creamos una Instancia de VM con las caracteristicas solicitadas 2 vCPU, 2 GiB en RAM y 20 GiB en almacenamiento, para esta prueba les instalamos un sistema ubuntu a las maquinas, una maquina para cada instancia requerida. Para este caso requerimos 3 instancias una para el `web-server`, `worker-server` y `file-storage`.
-
-Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso de configuracion de las instancias para cual debemos realiza una serie de instalaciones a nuestas intancias de VM con sistema ubuntu:
-
-    - **Instalación de Docker:**
-      - Para este requerimos instalar docker en ubuntu, para realizar esta instalacion puede seguir este tutorial "https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-es"
-
-    - **Instalación de Python:**
-      - Para realizar esta instalacion puede seguir este tutorial "https://www.hostinger.co/tutoriales/instalar-python-pip-ubuntu"
-
-    - **Instalación de Git:**
-      - Para realizar esta instalacion puede seguir este tutorial "https://simplecodetips.wordpress.com/2018/06/08/instalar-y-conectar-git-con-github-mediante-ssh/"
-
-    - **Instalación de Nano:**
-      -  Para realizar esta instalacion puede seguir este tutorial "https://www.hostinger.co/tutoriales/instalar-nano-text-editor"
-
-- **Clonar el repositorio:**
-  - Clona el repositorio del proyecto desde GitHub ejecutando el siguiente comando en tu terminal:
-    ```bash
-    git clone https://github.com/juanca-uniandes/idrl.git
-    ```
-
-  * Para el caso del despliegue en la nueve de gcp se debe entrar al codigo y modificar las rutas. Para esto validamos las IP asignadas po GCP para las instancias de VM.
-![Screenshot_10](https://github.com/juanca-uniandes/idrl/assets/142316997/a83fa2c5-a498-4938-9fa4-5db2d9a1fc10)
-
-  Y devemos entrar a modifcar con nano los archivos `web-server/app/app.py` validando la IP privada del worker-server `TASKS_URL = 'http://<IP_worker_server>:5004/tasks'`, `worker-server/app/tasks.py`, `worker-server/app/utils.py`  validando la IP privada del file-server `URL_ALMACENAR = "http://<URL_FILE_SERVER>:5001"`, adicional en `web-server/app/.env`, `worker-server/app/.env`  validamos y cambiamos los datos del host de la base de datos`POSTGRES_HOST="<URL_DB>"` y el puerto que utiliza la base de datos `POSTGRES_PORT="<PORT_DB>"` antes de realizar los despliegues de las maquinas virtuales.
 
 
-- **Iniciar los contenedores Docker:**
-    - **web-server**
-      - Una vez clonado el repositorio, navega al directorio del proyecto clonado:
-        ```bash
-        cd idrl
-        ```
+# Pasos para el despliegue del proyecto en Ambiente Cloud GCP
+## Preparación del proyecto
+-------------------------------------------------------------------------------
+### 1. Nuevo proyecto
+-------------------------------------------------------------------------------
+Antes de comenzar con la configuración, asegúrate de tener un nuevo proyecto creado en Google Cloud Platform (GCP).
 
-        ```bash
-        cd web-server
-        ```
+1. Accede al menú de "Compute Engine" en GCP.
+2. Habilita la API de "Compute Engine".
 
-  - Inicia los contenedores Docker definidos en el archivo `docker-compose.yml` contenido en las carpetas web-server y psg  ejecutando el siguiente comando:
-    ```bash
-    docker-compose up
-    ```
-    
-    - **worker-server**
-  - Para el worker-server es necesaria realizar una modificación dentro del archivo `worker-server/docker-compose.yml` se deben editar las networks, cambiando el parametro `- web-server_network`  por ` - network `  y el parametro `external: true`  por `driver: bridge` y despues si levantar el servidor worker-server ejecutando el siguiente comando:
-  
-        ```bash
-        cd idrl
-        ```
+-------------------------------------------------------------------------------
+### 2. VPC network -> Crear una regla de firewall
+-------------------------------------------------------------------------------
+Para permitir el tráfico entrante a tu instancia, necesitas configurar reglas de firewall.
 
-        ```bash
-        cd web-server
-        ```
-    - Inicia los contenedores Docker definidos en el archivo `docker-compose.yml` contenido en las carpetas web-server y psg  ejecutando el siguiente comando:
-      ```bash
-      docker-compose up
-      ```
+1. Accede al menú "VPC network" y selecciona "Firewall".
+2. Crea una nueva regla de firewall con los siguientes detalles:
+   - Nombre: default-allow-http
+   - Etiquetas del servidor: http-server
+   - Rangos de direcciones IPv4 fuente: 0.0.0.0/0
+   - Protocolos y puertos especificados: TCP / todos
 
+-------------------------------------------------------------------------------
+### 3. VPC network -> Crear una regla de firewall
+-------------------------------------------------------------------------------
+Además de la regla anterior, necesitarás otra para permitir el tráfico de comprobación de estado.
+
+1. Accede al menú "VPC network" y selecciona "Firewall".
+2. Crea una nueva regla de firewall con los siguientes detalles:
+   - Nombre: default-allow-health-check
+   - Etiquetas del servidor: http-server
+   - Rangos de direcciones IPv4 fuente: 130.21.0.0/22, 35.191.0.0/16
+   - Protocolos y puertos especificados: TCP / todos
+   - 
+## Cloud SQL
 
       - **Cloud SQL
   - Consideraciones: Si el sistema operativo es Windows, debes reemplazar la línea `CMD ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]` por `CMD ["python", "app.py"]`, y comentar la linea `RUN chmod +x wait-for-it.sh`  en el archivo `postgres-queries/Dockerfile`, adicional tambien debes comentar la linea `command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]` en el archivo `docker-compose.yml`. Luego, ejecuta nuevamente el contenedor `postgres-queries` después de que `docker-compose up` haya finalizado todo el despliegue. Esta consideración no es necesaria en sistemas operativos como Ubuntu y macOS.
   - Para que la el web-server y el worker-server enlacen con la base de datos local, se debe entrar a los archivos `.env` ubicados en las carpetas `web-server`,`worker-server`, remplazar el host por `postgres` y el port por `5432`
+
+## Servidor Worker-server
+
+-------------------------------------------------------------------------------
+### 1. Computer engine -> Crear una VM
+-------------------------------------------------------------------------------
+Configura una instancia virtual para alojar tu aplicación.
+
+1. Accede al menú "Compute Engine" y selecciona "VM Instances".
+2. Crea una nueva instancia con los siguientes detalles:
+   - Nombre: worker-server
+   - Región: us-central1
+   - Zona: us-central1-a
+   - Tipo de máquina: EC - e2-small (2 vCPU, 2 GB de RAM y 20 GB de almacenamiento)
+   - Disco de arranque: Imágenes públicas -> Sistema operativo: Ubuntu 20.04 LTS, Seleccionar la regla de conservar el disco de arranque.
+   - Configura las reglas de firewall para permitir el tráfico HTTP, HTTPS y comprobaciones de estado del balanceador de carga.
+   - Etiqueta de red: http-server
+   - Interfaces de red - Dirección IPv4 interna principal - Efimera(Personalizada): 10.128.0.3
+
+-------------------------------------------------------------------------------
+### 2. Computer engine -> SSH a la VM worker-server
+-------------------------------------------------------------------------------
+Accede a la instancia de VM recién creada para instalar Docker y configurar tu aplicación.
+
+1. Accede a la VM utilizando SSH.
+2. Ejecuta los siguientes comandos para instalar Docker, clonar tu repositorio y levantar tu aplicación.
+
+```bash
+sudo apt-get update -y &&\
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common &&\
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&\
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" &&\
+sudo apt-get update -y &&\
+sudo apt-get install docker-ce docker-ce-cli containerd.io -y &&\
+sudo usermod -aG docker $USER &&\
+git clone https://github.com/juanca-uniandes/idrl.git &&\
+cd idrl/worker-server &&\
+sudo docker compose up -d &&\
+sudo docker ps -a  &&\
+sudo systemctl enable docker.service &&\
+sudo docker update --restart=always worker-server-worker-1 &&\
+sudo docker update --restart=always worker-server-redis-1 &&\
+sudo docker update --restart=always worker-server-tasks-1 &&\
+```
+
+
+## AutoScaling
+
+-------------------------------------------------------------------------------
+### 1. Computer engine -> Crear una VM
+-------------------------------------------------------------------------------
+Configura una instancia virtual para alojar tu aplicación.
+
+1. Accede al menú "Compute Engine" y selecciona "VM Instances".
+2. Crea una nueva instancia con los siguientes detalles:
+   - Nombre: web-server
+   - Región: us-central1
+   - Zona: us-central1-a
+   - Tipo de máquina: EC - e2-small (2 vCPU, 2 GB de RAM y 20 GB de almacenamiento)
+   - Disco de arranque: Imágenes públicas -> Sistema operativo: Ubuntu 20.04 LTS, Seleccionar la regla de conservar el disco de arranque.
+   - Configura las reglas de firewall para permitir el tráfico HTTP, HTTPS y comprobaciones de estado del balanceador de carga.
+   - Etiqueta de red: http-server
+
+-------------------------------------------------------------------------------
+### 2. Computer engine -> SSH a la VM web-server
+-------------------------------------------------------------------------------
+Accede a la instancia de VM recién creada para instalar Docker y configurar tu aplicación.
+
+1. Accede a la VM utilizando SSH.
+2. Ejecuta los siguientes comandos para instalar Docker, clonar tu repositorio y levantar tu aplicación.
+
+```bash
+sudo apt-get update -y &&\
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common &&\
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&\
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" &&\
+sudo apt-get update -y &&\
+sudo apt-get install docker-ce docker-ce-cli containerd.io -y &&\
+sudo usermod -aG docker $USER &&\
+git clone https://github.com/juanca-uniandes/idrl.git &&\
+cd idrl/web-server &&\
+sudo docker compose up -d &&\
+sudo docker ps -a  &&\
+sudo systemctl enable docker.service &&\
+sudo docker update --restart=always web-server-app-1 &&\
+sudo docker update --restart=always web-server-nginx-1 &&\
+```
+
+
+
+** Se debe tener encuenta que la IP interna del worker-server sea 10.128.0.3, en caso de no tener esta ip, se deben ejecutar estos comandos después de haber clonado el repositorio.
+
+```bash
+cd idrl/web-server/app &&\
+nano app.py
+```
+Una vez abra el app.py se debe modificar esta linea de código con la IP interna perteneciente al worker-server.
+```nano de app.py
+# URL del servidor que realiza las tareas
+TASKS_URL = 'http://IP_WORKER_SERVER:5004/tasks'
+```
+una ves hecho se guarda el archivo y se deben seguir ejecutando los comandos siguientes a clonar el repositorio.
+
+-------------------------------------------------------------------------------
+### 3. Computer engine -> Seleccionar web-server
+-------------------------------------------------------------------------------
+Después de configurar la VM y tu aplicación, verifica su funcionamiento y realiza las configuraciones adicionales necesarias.
+
+1. Accede a la VM web-server `http://34.122.54.87:5000`. Te dará una respuesta: BASE OK OK OK!
+2. Verifica que la aplicación esté funcionando correctamente.
+3. Configura las opciones de eliminación de la instancia, como mantener el disco de arranque al eliminar la instancia y elimina la instancia.
+4. Verificar que el disco aun exista en la sección "Disk"
+
+
+-------------------------------------------------------------------------------
+### 4. Computer engine -> Seleccionar imágenes
+-------------------------------------------------------------------------------
+Antes de crear plantillas de instancia, asegúrate de tener una imagen personalizada creada.
+
+1. Accede al menú "Compute Engine" y selecciona "Images".
+2. Crea una nueva imagen con el disco de la instancia web-server con la siguiente configuración.
+
+   - name: mywebserver
+   - source: disk
+   - source disk: web-server
+
+-------------------------------------------------------------------------------
+### 5. Computer engine -> Plantillas de instancia
+-------------------------------------------------------------------------------
+Utiliza plantillas de instancia para simplificar la creación de instancias futuras.
+
+1. Accede al menú "Compute Engine" y selecciona "Instance Templates".
+2. Crea una nueva plantilla con los detalles de la imagen personalizada y las reglas de firewall necesarias con la siguiente configuración.
+   - name: mywebserver-template
+   - machine type: E2-Small
+   - boot disk -> change -> custom images -> image: mywebserver
+   - Firewall: Allow HTTP Traffic
+   - Firewall: Allow HTTPS Traffic
+   - Firewall: Allow Load Balancer Health Checks
+   - Advanced options -> Networking -> server tags: http-server
+
+-------------------------------------------------------------------------------
+### 6. Computer engine -> Grupos de instancias
+-------------------------------------------------------------------------------
+Crea grupos de instancias para facilitar la gestión y el escalado automático de tus aplicaciones.
+
+1. Accede al menú "Compute Engine" y selecciona "Instance Groups".
+2. Crea un nuevo grupo de instancias con la plantilla previamente creada y configura el autoescalado y la auto-curación según sea necesario, con la siguiente configuración.
+
+   - name: us-central1-mig
+   - Instance template: mywebserver-template
+   - Location: single zone
+   - Region: us-central1
+   - Zones: us-central1-c
+   - Autoscaling: On
+   - Minimum number of instance: 1
+   - Maximum number of instance: 5
+   - Edit-signal->signal type: HTTP Load balancing utilization
+   - Edit-signal->target HTTP load balancing utilization: 75
+   - Autohealing-> create health check->name: http-health-check
+   - Autohealing-> create health check->scope: global
+   - Autohealing-> create health check->scope->protocol: TCP
+   - Autohealing-> create health check->scope->port: 5000
+   - Initial Delay: 60
+
+Create:
+   - Autoscaling configuration is not complete: COMFIRM
+
+** Al terminar esto se debe generar una instancia con la imagen templete creada, en la cual puedes validar el estado de la aplicación con la IP externa.
+
+## Load Balancing
+
+-------------------------------------------------------------------------------
+### 1. Network services -> Balanceo de carga
+-------------------------------------------------------------------------------
+Configura un balanceador de carga para distribuir el tráfico entre tus instancias.
+
+1. Accede al menú "Network services" y selecciona "Load Balancing".
+2. Crea un nuevo balanceador de carga de aplicación con los detalles adecuados, incluida la configuración del backend y la comprobación de estado, con la siguiente configuración.
+
+   - Application Load Balancer (HTTP/HTTPS)
+   - Public facing (external)
+   - Best for global workloads
+   - Global external Application Load Balancer
+   - name: http-lb
+   - backend->create backend service->name: http-backend
+   - backend->create backend service->backend type: Instance group
+   - backend->create backend service->instance group: us-central1-mig
+   - backend->create backend service->port numbers: 5000
+   - backend->create backend service->balancing mode: rate
+   - backend->create backend service->balancing mode->rate: Maximum RPS (50)
+   - backend->create backend service->balancing mode->rate: capacidad 80 
+   - backend->Health check: http-health-check
+   - backend->cloud armor policies:default-security-policy-for-backend-service-http-backend
+
+Create
+
+
+## Proceso de eliminación.
+
+Para evitar gastos inecesarios se pueden eliminar las instancias de la siguiente manera.
+
+-------------------------------------------------------------------------------
+### 1. Eliminar -> Para evitar consumo innecesario
+-------------------------------------------------------------------------------
+Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos para evitar cargos innecesarios en tu cuenta de GCP.
+
+1. Elimina el balanceador de carga, los grupos de instancias y las instancias virtuales.
+   - Network services -> Load Balancing -> http-load -> delete
+   - Network services -> Load Balancing -> http-load -> delete ->http-backend
+   - cloud armor policies -> default-security-policy-for-backend-service-http-backend -> delete
+   - Computer engine -> Instance groups -> us-central1-mig -> delete
+   - Computer engine -> Instance VM  -> us-central1-mig-*  -> delete
+
+
+** Para reinstalar debes volver a realizar el punto 6 del autoscaling y el punto 1 de load balancing. 
+
 
 
     
@@ -106,7 +298,7 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
   - Todos los endpoints que se detallan a continuación requieren el encabezado `Content-Type: application/json`:
 
     1. **Registro de usuario:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>:5050/auth/signup` con un cuerpo que contenga los siguientes campos:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/auth/signup` con un cuerpo que contenga los siguientes campos:
       ```json
       {
           "username": "admin",
@@ -117,7 +309,7 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
       ```
 
     2. **Obtener token de acceso:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>:5050/auth/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/auth/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
       ```json
       {
           "email": "admin@gmail.com",
@@ -132,9 +324,9 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
       ```
 
     3. **Cargar video para procesamiento:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>:5050/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
       ```bash
-      curl --location 'http://<IP_PUBLICA_WEB_SERVER>:5050/tasks' \
+      curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks' \
       --header 'Content-Type: application/json' \
       --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw' \
       --data  '{
@@ -148,21 +340,21 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
       }
       ```
       4. **Consultar estado de todas las tareas**
-      - Realiza una solicitud GET a http://<IP_PUBLICA_WEB_SERVER>:5050/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - El parametro "max" indica el numero maximo de registros
       - El parametro "order" especifica el orden en que se muestran los datos, 0 si es ascendete y 1 si es descendente
       - Ejemplo:
     ```
-    curl --location 'http://<IP_PUBLICA_WEB_SERVER>:5050/tasks?max=4&order=1' \
+    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
     5. **Consultar estado de una tarea**
-      - Realiza una solicitud GET a http://<IP_PUBLICA_WEB_SERVER>:5050/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea 
       - Ejemplo:
     ```
-    curl --location 'http://<IP_PUBLICA_WEB_SERVER>:5050/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
@@ -172,7 +364,7 @@ Una ves creada las instancias accedemos a ellas por *SSH* e iniciamos el proceso
       - ID-TASK es el codigo de la tarea, que se puede obtener de la consulta especificada en el paso (4)
       - Ejemplo:
     ```
-    curl -X DELETE --location 'http://<IP_PUBLICA_WEB_SERVER>:5050/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl -X DELETE --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
