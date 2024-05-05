@@ -1,4 +1,4 @@
-## Arquitectura
+# Arquitectura
 Se ha desplegado en GCP una de base de datos y 3 maquinas virtuales en GCP las cuales se encuentran en el mismo segmento de red. En cada instancia se han desplegado los contenedores previamente desarrollados de modo que funcionen de manera independiente en cada maquina virtual.
 
 ![image](https://github.com/juanca-uniandes/idrl/assets/142316997/f26aa9ba-cdd8-4b99-a0ff-8c33e5af70fc)
@@ -119,7 +119,69 @@ sudo docker update --restart=always worker-server-worker-1 &&\
 sudo docker update --restart=always worker-server-redis-1 &&\
 sudo docker update --restart=always worker-server-tasks-1 &&\
 ```
+## CLOUD STORAGE - BUCKETS
 
+A continuacion se detallan los pasos necesarios para crear y conectar un bucket de Google Cloud Storage a una instancia de Compute Engine en Google Cloud Platform (GCP).
+
+
+-------------------------------------------------------------------------------
+## 1. Cloud Storage - Create a Bucket
+-------------------------------------------------------------------------------
+
+1. Accede al menú "Cloud Storage" y selecciona "bucket".
+2. Crea un nuevo bucket con los siguientes detalles:
+3. Haz clic en el botón "Crear bucket".
+- Nombre: misoe3g23
+- Almacenamiento: Multi-Region
+- Clase de almacenamiento: Configura r una clase predeterminada - Standard
+- Control de acceso: Prevención de acceso publico
+- Control de acceso: Uniforme
+- Proteger los datos: Ninguna
+- Crear
+- Prohibir acceso al publico: Aceptar
+
+-------------------------------------------------------------------------------
+## 2. Configurar los Permisos del Bucket
+-------------------------------------------------------------------------------
+
+1. Una vez creado el bucket, selecciona el bucket recién creado.
+2. Ve a la pestaña "Permisos".
+3. Haz clic en el botón "Agregar miembro".
+4. Ingresa el nombre de la cuenta de servicio asociada a tu instancia de Compute Engine.
+5. Selecciona el rol apropiado para la cuenta de servicio (por ejemplo, "Storage Object Creator" o "Storage Object Admin").
+6. Haz clic en el botón "Guardar".
+
+-------------------------------------------------------------------------------
+## 3. Crear una Instancia de Compute Engine - Worker-Server
+-------------------------------------------------------------------------------
+
+1. En el menú de navegación, selecciona "Compute Engine" > "VM Instances".
+2. Haz clic en el botón "Crear instancia".
+3. Para la cual vamos a verificar el apartado del Worker-Server.
+4. En la sección "Identidad y Acceso a la API", selecciona la cuenta de servicio que tiene permisos sobre el bucket creado anteriormente.
+5. Haz clic en el botón "Crear".
+
+-------------------------------------------------------------------------------
+## 4. Conectarse a la Instancia por SSH
+-------------------------------------------------------------------------------
+
+1. Una vez que la instancia esté creada, haz clic en el botón de SSH para conectarte a la instancia.
+2. Se abrirá una ventana de terminal con la conexión SSH a tu instancia.
+
+-------------------------------------------------------------------------------
+## 5. Copiar Archivos entre la Instancia y el Bucket
+-------------------------------------------------------------------------------
+
+1. Desde la instancia de Compute Engine, utiliza el comando `gsutil` para copiar archivos hacia o desde el bucket de Cloud Storage.
+   - Para copiar un archivo desde la instancia a un bucket: `gsutil cp archivo.txt gs://nombre-del-bucket`.
+   - Para copiar un archivo desde un bucket a la instancia: `gsutil cp gs://nombre-del-bucket/archivo.txt .` (el punto final indica el directorio actual).
+
+-------------------------------------------------------------------------------
+## 6. Verificar la Conexión
+-------------------------------------------------------------------------------
+
+1. Copia un archivo desde la instancia de Compute Engine al bucket de Google Cloud Storage utilizando `gsutil`.
+2. Verifica que el archivo se haya copiado correctamente accediendo al bucket a través del [Console de Google Cloud Platform](https://console.cloud.google.com/).
 
 ## AutoScaling
 
@@ -426,7 +488,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
     ```
   
     6. **Abortar una tarea:**
-      - Realiza una solicitud DELETE a http://<IP_PUBLICA_WEB_SERVER>:5050/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud DELETE a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea, que se puede obtener de la consulta especificada en el paso (4)
       - Ejemplo:
     ```
@@ -473,7 +535,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
   - Todos los endpoints que se detallan a continuación requieren el encabezado `Content-Type: application/json`:
 
     1. **Registro de usuario:**
-      - Realiza una solicitud POST a `http://127.0.0.1:5050/auth/signup` con un cuerpo que contenga los siguientes campos:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/auth/signup` con un cuerpo que contenga los siguientes campos:
       ```json
       {
           "username": "admin",
@@ -484,7 +546,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       ```
 
     2. **Obtener token de acceso:**
-      - Realiza una solicitud POST a `http://127.0.0.1:5050/auth/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/auth/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
       ```json
       {
           "email": "admin@gmail.com",
@@ -499,9 +561,9 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       ```
 
     3. **Cargar video para procesamiento:**
-      - Realiza una solicitud POST a `http://127.0.0.1:5050/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
       ```bash
-      curl --location 'http://localhost:5050/tasks' \
+      curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks' \
       --header 'Content-Type: application/json' \
       --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw' \
       --data  '{
@@ -515,31 +577,31 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       }
       ```
       4. **Consultar estado de todas las tareas**
-      - Realiza una solicitud GET a http://localhost:5050/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - El parametro "max" indica el numero maximo de registros
       - El parametro "order" especifica el orden en que se muestran los datos, 0 si es ascendete y 1 si es descendente
       - Ejemplo:
     ```
-    curl --location 'http://localhost:5050/tasks?max=4&order=1' \
+    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
     5. **Consultar estado de una tarea**
-      - Realiza una solicitud GET a http://localhost:5050/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea 
       - Ejemplo:
     ```
-    curl --location 'http://localhost:5050/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
   
     6. **Abortar una tarea:**
-      - Realiza una solicitud DELETE a http://127.0.0.1:5050/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud DELETE a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea, que se puede obtener de la consulta especificada en el paso (4)
       - Ejemplo:
     ```
-    curl -X DELETE --location 'http://localhost:5050/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl -X DELETE --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
