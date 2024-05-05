@@ -11,7 +11,7 @@ La distribucion de los componentes se detalla a continuacion:
     - Distribulle 50 solicitudes por instancia.
 - **Autoscaling:**
     - Crea multiples instancias del web-server con base en Métricas de ajuste de escala automático: Uso del balanceo de cargas de HTTP: 75%.
-    - Crea entre minimo 1 instancia y 5 instancias.
+    - Crea entre minimo 1 instancia y 3 instancias.
 - **Web-Server:**
     - Contenedor Nginx: Configurado como un proxy, para atender las peticiones del usuario,
     - Autorization: Su labor principal es autenticar al usuario con el proposito de proteger a los endpoins que deban estar autorizados.
@@ -231,7 +231,7 @@ Crea grupos de instancias para facilitar la gestión y el escalado automático d
    - Zones: us-central1-c
    - Autoscaling: On
    - Minimum number of instance: 1
-   - Maximum number of instance: 5
+   - Maximum number of instance: 3
    - Edit-signal->signal type: HTTP Load balancing utilization
    - Edit-signal->target HTTP load balancing utilization: 75
    - Autohealing-> create health check->name: http-health-check
