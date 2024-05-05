@@ -112,6 +112,13 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io -y &&\
 sudo usermod -aG docker $USER &&\
 git clone https://github.com/juanca-uniandes/idrl.git &&\
 cd idrl/worker-server &&\
+```
+Por politicas de privacidad y seguridad de github no es posible subir un archivo que se requiere para ingresar al bucket desde el worker-server, por consiguiente de manera manual se debe crear un archivo con nombre “credentials-mgmt.json”, copiar y pegar los datos del json que se encuentran dentro del siguiente pdf y guardar el archivo.
+
+[Documentacion_acceso_Bucked.pdf](https://github.com/juanca-uniandes/idrl/files/15214314/Documentacion_acceso_Bucked.pdf)
+
+Una ves realizado este proceso correctamente se procede a continuar con los pasos. 
+```bash
 sudo docker compose up -d &&\
 sudo docker ps -a  &&\
 sudo systemctl enable docker.service &&\
