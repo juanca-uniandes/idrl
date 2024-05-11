@@ -42,10 +42,13 @@ def token_required(f):
     return decorated
 
 #### Pruebas nginx y JWT ####
+@app.route('/')
+def OK():
+    return 'BASE OK OK OK!'
+
 @app.route('/tasks/ok')
-@token_required
-def index(current_user):
-    return 'OK OK OK!'
+def index():
+    return 'TASKS OK OK OK!'
 #### ELIMINAR DESPUES DE VALIDADO ####
 
 
@@ -100,4 +103,4 @@ def abort(current_user, task_id):
     return jsonify({'result': 'Tarea cancelada correctamente'}), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5004)
+    app.run(host='0.0.0.0', port=5000)
