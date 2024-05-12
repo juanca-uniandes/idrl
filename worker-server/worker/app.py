@@ -91,7 +91,6 @@ def start():
 
         token = actual_data.get('Authorization')
 
-        return jsonify({'token': token,'pubsub_message': pubsub_message, 'pubsub_message_json': actual_data}),201
         # Obtener el usuario actual a partir del token
         current_user = get_token_from_body(token)
 
