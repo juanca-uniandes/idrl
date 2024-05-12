@@ -59,29 +59,55 @@ def index():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def get_token_from_body(token):
+    try:
+        if not token:
+            raise ValueError('Token is missing!')
+
+        # Decodificar el token y extraer la información del usuario
+        data = jwt.decode(token, 'videos-mgmt', algorithms=['HS256'])
+        current_user = data['user_id']
+        
+        # Agregar la información del usuario a la solicitud
+        request.current_user = current_user
+        # Pasar la información del usuario a la función decorada (opcional)
+        return current_user
+    except jwt.ExpiredSignatureError:
+        raise ValueError('Token has expired!')
+    except jwt.InvalidTokenError:
+        raise ValueError('Invalid token!')
+
 # Rutas protegidas que requieren un token válido
 @app.route('/tasks', methods=['POST'])
-@token_required
-def start(current_user):
-     
-    try:   
-        # Decodifica el cuerpo del mensaje recibido de Pub/Sub
+def start():
+    try:
+        # Decodificar el cuerpo del mensaje recibido de Pub/Sub
         pubsub_message = request.data.decode('utf-8')
 
-        # Parsea el mensaje JSON
+        # Parsear el mensaje JSON
         pubsub_message_json = json.loads(pubsub_message)
+        token = pubsub_message_json.get('Authorization')
 
-        # Extrae la URL del mensaje
+        # Obtener el usuario actual a partir del token
+        current_user = get_token_from_body(token)
+
+        # Extraer la URL del mensaje
         url = pubsub_message_json.get('url')
+
         if not url:
             return jsonify({'error': 'La URL no puede estar vacía'}), 404
+        
+        if not allowed_file(url):
+            return jsonify({'error': f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"}), 404
+
+        # Si todo está bien, procesar el video
+        task = process_video.delay(url, current_user)
+        return jsonify({'task_id': str(task.id), 'user': current_user}), 202
+    
     except KeyError:
         return jsonify({'error': 'Proporcione una URL'}), 404
-    if not allowed_file(url):
-        return jsonify({'error': f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"}), 404
-
-    task = process_video.delay(url, current_user)
-    return jsonify({'task_id': str(task.id), 'user': current_user}), 202
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 401
 
 
 @app.route('/tasks', methods=['GET'])
