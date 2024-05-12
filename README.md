@@ -108,10 +108,10 @@ Es necesario utilizar una cuenta de servicio con los permisos necesarios para ac
 Crear una instancia de base de datos en PostgreSQL
 
 
-## Balanceador de carga para el Worker-server
 -------------------------------------------------------------------------------
-### 1. Computer engine -> Crear una VM
+### 5. Balanceador de carga para el Worker-server
 -------------------------------------------------------------------------------
+#### a. Computer engine -> Crear una VM
 Configura una instancia virtual para alojar tu aplicación.
 
 1. Accede al menú "Compute Engine" y selecciona "VM Instances".
@@ -125,42 +125,24 @@ Configura una instancia virtual para alojar tu aplicación.
    - Etiqueta de red: http-server
    - Interfaces de red - Dirección IPv4 interna principal - Efimera(Personalizada): 10.128.0.3
 
--------------------------------------------------------------------------------
-### 2. Computer engine -> SSH a la VM worker-server
--------------------------------------------------------------------------------
+#### b. Computer engine -> SSH a la VM worker-server
 Accede a la instancia de VM recién creada para instalar Docker y configurar tu aplicación.
 
 1. Accede a la VM utilizando SSH.
-2. Ejecuta los siguientes comandos para instalar Docker, clonar tu repositorio y levantar tu aplicación.
+2. Clona el repositorio (https://github.com/juanca-uniandes/idrl)
+3. Ejecuta los comandos para "levantar" los contenedores de la carpeta "worker-server" de modo que se ejecuten al iniciar el sistema operativo
 
-```bash
-sudo apt-get update -y &&\
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common &&\
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&\
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" &&\
-sudo apt-get update -y &&\
-sudo apt-get install docker-ce docker-ce-cli containerd.io -y &&\
-sudo usermod -aG docker $USER &&\
-git clone https://github.com/juanca-uniandes/idrl.git &&\
-cd idrl/worker-server &&\
-```
-Por politicas de privacidad y seguridad de github no es posible subir un archivo que se requiere para ingresar al bucket desde el worker-server, por consiguiente de manera manual se debe crear un archivo con nombre “credentials-mgmt.json”, copiar y pegar los datos del json que se encuentran dentro del siguiente pdf y guardar el archivo.
+#### c. Crea la imagen
+Utilizando el disco de la mquina virtual del paso anetrior, se crea una imagen
 
-[Documentacion_acceso_Bucked.pdf](https://github.com/juanca-uniandes/idrl/files/15214314/Documentacion_acceso_Bucked.pdf)
+#### d. Crea el instance template
+Utilizando la imagen del paso anetrior, crear un instance template utilizando la cuenta asociada en el paso 4
 
-Una ves realizado este proceso correctamente se procede a continuar con los pasos. 
-```bash
-sudo docker compose up -d &&\
-sudo docker ps -a  &&\
-sudo systemctl enable docker.service &&\
-sudo docker update --restart=always worker-server-worker-1 &&\
-sudo docker update --restart=always worker-server-redis-1 &&\
-sudo docker update --restart=always worker-server-tasks-1 &&\
-```
-## CLOUD STORAGE - BUCKETS
+#### e. Crea el group instance
+Utilizando el template anterior, crear un group instance configurado de tal manera que tenga habilitado el autoescalamiento con 3 instancias como maximo y que tenga como "signal" asociado el "PubSub" para que cada instancia pueda atender 5 mensajes como maximo
 
-A continuacion se detallan los pasos necesarios para crear y conectar un bucket de Google Cloud Storage a una instancia de Compute Engine en Google Cloud Platform (GCP).
-
+#### f. Crea el load balancing
+Utilizando el componente anterior crear el load balancing de modo que el backend de este tenga habilitado el protocolo HTTPS, para ello adquirir un dominio y seleccionar la opcion en la cual GCP crea un certificado. Se realiza esta configuracion puesto que nuestra arquitectura es de tipo "PUSH" y requiere que los mensajes se envien por https.
 
 -------------------------------------------------------------------------------
 ## 1. Cloud Storage - Create a Bucket
