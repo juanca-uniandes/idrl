@@ -3,6 +3,9 @@ from functools import wraps
 import jwt
 import datetime
 import requests
+import base64
+import json
+from flask import request
 from tasks import app as celery_app, process_video
 from util import fn_info_tasks, fn_info_task, delete_task
 
@@ -41,6 +44,7 @@ def token_required(f):
 
     return decorated
 
+    
 #### Pruebas nginx y JWT ####
 @app.route('/')
 def OK():
@@ -59,8 +63,16 @@ def allowed_file(filename):
 @app.route('/tasks', methods=['POST'])
 @token_required
 def start(current_user):
-    try:
-        url = request.json['url']
+     
+    try:   
+        # Decodifica el cuerpo del mensaje recibido de Pub/Sub
+        pubsub_message = request.data.decode('utf-8')
+
+        # Parsea el mensaje JSON
+        pubsub_message_json = json.loads(pubsub_message)
+
+        # Extrae la URL del mensaje
+        url = pubsub_message_json.get('url')
         if not url:
             return jsonify({'error': 'La URL no puede estar vacía'}), 404
     except KeyError:

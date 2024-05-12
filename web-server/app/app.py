@@ -2,10 +2,12 @@ from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import jwt
+import json
 import datetime
 import random
 import psycopg2
 import requests
+from google.cloud import pubsub_v1
 import time
 import os
 import re
@@ -18,6 +20,8 @@ DB_USER = os.getenv("POSTGRES_USER")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_HOST = os.getenv("POSTGRES_HOST")
 DB_PORT = 5433
+PROJECT_ID = "pry-pruebas"
+TOPIC_NAME = "topic-videos"
 
 # Función para conectar a la base de datos PostgreSQL
 def connect_db():
@@ -172,21 +176,36 @@ def allowed_file(filename):
 @app.route('/tasks', methods=['POST'])
 @token_required
 def start(current_user):
+    
+    authorization_header = request.headers.get('Authorization')
     try:
         url = request.json['url']
         if not url:
             return jsonify({'error': 'La URL no puede estar vacía'}), 404
     except KeyError:
         return jsonify({'error': 'Proporcione una URL'}), 404
+    
     if not allowed_file(url):
         return jsonify({'error': f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"}), 404
-    
-    response = requests.post(TASKS_URL, json={'url': url}, headers=request.headers)
-    if response.status_code != 202:
-        return jsonify({'error': 'Error al iniciar la tarea'}), 500
 
-    # Tarea iniciada correctamente
-    return jsonify({'task_id': 'Tarea iniciada correctamente'}), 202
+    # Crea un cliente de Pub/Sub
+    publisher = pubsub_v1.PublisherClient()
+
+    # Formatea el nombre completo del tema
+    topic_path = publisher.topic_path(PROJECT_ID, TOPIC_NAME)
+
+    # Construye el mensaje con el payload y el header de autorización
+    message = {'url': url}
+    message_bytes = json.dumps(message).encode('utf-8')
+    headers = {'Authorization': 'Bearer ' + authorization_header}
+
+    # Publica el mensaje en el tema con el header de autorización
+    future = publisher.publish(topic_path, data=message_bytes, headers=headers)
+
+    # Espera a que el mensaje se publique completamente
+    task_id = future.result()
+
+    return jsonify({'task_id': str(task_id), 'user': current_user}), 202
 
 
 @app.route('/tasks', methods=['GET'])
