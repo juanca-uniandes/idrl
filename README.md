@@ -1,16 +1,19 @@
 # Arquitectura
-Se ha desplegado en GCP una de base de datos y 3 maquinas virtuales en GCP las cuales se encuentran en el mismo segmento de red. En cada instancia se han desplegado los contenedores previamente desarrollados de modo que funcionen de manera independiente en cada maquina virtual.
+Se ha desplegado en GCP una de base de datos, 2 balanceadores de carga, el PubSub y el cloud storage. El primer balanceador de carga esta asociado a las replicas de la instancia web-server y el segundo asociado a la maquina virtual worker; ambas configuradas de manera que pueda llevarse a cabo el autoescalamiento.
 
-![image](https://github.com/juanca-uniandes/idrl/assets/142316997/f26aa9ba-cdd8-4b99-a0ff-8c33e5af70fc)
-
+![entrega04](https://github.com/juanca-uniandes/idrl/assets/142269475/9d32b25b-dd2e-48f5-95d8-b1963b0a3037)
 
 
 La distribucion de los componentes se detalla a continuacion:
 - **Load Balancing:**
-    - Configuracion de distribucion de cargas para los servidores del web-server configurados en el autoscaling.
-    - Distribulle 50 solicitudes por instancia.
+    - Configuracion de distribucion de carga para las instancias del web-server configurados en el autoscaling.
+    - El criterio de escalmianto es de 50 solicitudes por instancia.
+    - Configuracion de distribucion de cargas para las instancias del worker configurados en el autoscaling.
+    - El criterio de escalmianto es de 5 mensajes por instancia..
 - **Autoscaling:**
     - Crea multiples instancias del web-server con base en Métricas de ajuste de escala automático: Uso del balanceo de cargas de HTTP: 75%.
+    - Crea entre minimo 1 instancia y 3 instancias.
+    - Crea multiples instancias del workerserver con base en Métricas de ajuste de escala automático: Uso de CPU al 75%.
     - Crea entre minimo 1 instancia y 3 instancias.
 - **Web-Server:**
     - Contenedor Nginx: Configurado como un proxy, para atender las peticiones del usuario,
@@ -25,6 +28,8 @@ Se encarga de almacenar los videos descargados y procesados
 Instancia de base de datos en Postgres
 - **Monitoring:**
 Atravez de politas monitorea los servicios del autoscaling, grupo de instancias segun varios parametros y de forma grafica.
+- **PubSub:**
+Utilizado para realizar la comunicacion asincrona entre el balanceador web y el balanceador del worker, de esta manera las instancias dentro de estos pueden escalar automaticamente de acuerdo a la carga de trabajo
 
 ### Tecnologías asociadas
 - Docker
@@ -33,8 +38,6 @@ Atravez de politas monitorea los servicios del autoscaling, grupo de instancias 
 - Celery
 - PostgreSQL
 - JMeter
-
-
 
 # Pasos para el despliegue del proyecto en Ambiente Cloud GCP
 ## Preparación del proyecto
@@ -69,15 +72,43 @@ Además de la regla anterior, necesitarás otra para permitir el tráfico de com
    - Etiquetas del servidor: http-server
    - Rangos de direcciones IPv4 fuente: 130.21.0.0/22, 35.191.0.0/16
    - Protocolos y puertos especificados: TCP / todos
-   - 
-## Cloud SQL
 
-      - **Cloud SQL
-  - Consideraciones: Si el sistema operativo es Windows, debes reemplazar la línea `CMD ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]` por `CMD ["python", "app.py"]`, y comentar la linea `RUN chmod +x wait-for-it.sh`  en el archivo `postgres-queries/Dockerfile`, adicional tambien debes comentar la linea `command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "app.py"]` en el archivo `docker-compose.yml`. Luego, ejecuta nuevamente el contenedor `postgres-queries` después de que `docker-compose up` haya finalizado todo el despliegue. Esta consideración no es necesaria en sistemas operativos como Ubuntu y macOS.
-  - Para que la el web-server y el worker-server enlacen con la base de datos local, se debe entrar a los archivos `.env` ubicados en las carpetas `web-server`,`worker-server`, remplazar el host por `postgres` y el port por `5432`
+-------------------------------------------------------------------------------
+### 4. IAM Service account -> Crear un Rol y Cuenta de servicio con los permisos necesarios
+-------------------------------------------------------------------------------
+Es necesario utilizar una cuenta de servicio con los permisos necesarios para acceder a PubSub y Cloud Storage, en resumen la cuenta debe tener los siguientes permisos:
+   - pubsub.subscriptions.consume
+   - pubsub.subscriptions.create
+   - pubsub.subscriptions.delete
+   - pubsub.subscriptions.get
+   - pubsub.subscriptions.list
+   - pubsub.subscriptions.update
+   - pubsub.topics.create
+   - pubsub.topics.delete
+   - pubsub.topics.detachSubscription
+   - pubsub.topics.get
+   - pubsub.topics.list
+   - pubsub.topics.publish
+   - pubsub.topics.update
+   - pubsub.topics.updateTag
+   - storage.buckets.create
+   - storage.buckets.delete
+   - storage.buckets.get
+   - storage.buckets.list
+   - storage.buckets.update
+   - storage.objects.create
+   - storage.objects.delete
+   - storage.objects.get
+   - storage.objects.list
+   - storage.objects.update
 
-## Servidor Worker-server
+-------------------------------------------------------------------------------
+### 4. SQL -> Cloud Sql
+-------------------------------------------------------------------------------
+Crear una instancia de base de datos en PostgreSQL
 
+
+## Balanceador de carga para el Worker-server
 -------------------------------------------------------------------------------
 ### 1. Computer engine -> Crear una VM
 -------------------------------------------------------------------------------
@@ -297,7 +328,7 @@ Crea grupos de instancias para facilitar la gestión y el escalado automático d
    - Instance template: mywebserver-template
    - Location: single zone
    - Region: us-central1
-   - Zones: us-central1-c
+   - Zones: us-central1-a y us-central1-c
    - Autoscaling: On
    - Minimum number of instance: 1
    - Maximum number of instance: 3
