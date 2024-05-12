@@ -84,7 +84,7 @@ def get_token_from_body(token):
 def start():
     try:
         # Decodificar el cuerpo del mensaje recibido de Pub/Sub
-        pubsub_message = json.loads(request.data.decode('utf-8'))
+        pubsub_message = request.data.decode('utf-8')
 
         # Parsear el mensaje JSON
         actual_data = json.loads(pubsub_message['data'])
