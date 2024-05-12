@@ -20,8 +20,9 @@ DB_USER = os.getenv("POSTGRES_USER")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_HOST = os.getenv("POSTGRES_HOST")
 DB_PORT = 5433
-PROJECT_ID = "pry-pruebas"
-TOPIC_NAME = "topic-videos"
+
+PROJECT_ID = "web-server-420612"
+TOPIC_NAME = "post-task-sub"
 
 # Función para conectar a la base de datos PostgreSQL
 def connect_db():
@@ -34,7 +35,7 @@ def connect_db():
     )
 
 # URL del servidor que realiza las tareas
-TASKS_URL = 'http://10.128.0.3:5004/tasks'
+TASKS_URL = 'http://34.102.226.96/tasks'
 
 #EXTENCION de los videos
 ALLOWED_EXTENSIONS = {'mp4'}
