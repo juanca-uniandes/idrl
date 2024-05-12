@@ -405,7 +405,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
 - **Verificación de la salud de los servidores en el balanceador de carga en la nube**
   - **Protocolo:** HTTP
   - **Tipo de recurso:** URL
-  - **Hostname:** 34.36.153.134
+  - **Hostname:** 34.49.16.68 y 34.49.16.68
   - **Frecuencia de la verificación:** 1 minuto
   - **Tiempo de espera de respuesta:** 10 segundos
   - **Registrar fallos de verificación:** Verdadero
