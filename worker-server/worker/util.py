@@ -3,14 +3,14 @@ import os
 from google.cloud import storage
 
 BUCKET_NAME = "misoe3g23"
-CREDENTIALS_FILE = "credentials-mgmt.json"
+CREDENTIALS_FILE = "credentials-cuenta-storage.json"
 DB_NAME = "idrl_db"
 DB_USER = "idrl_user"
 DB_PASSWORD = "idrl_2024"
 DB_HOST = "161.132.40.204"
 DB_PORT = 5433
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = CREDENTIALS_FILE
 
 def upload_to_gcs(source_file_path, destination_blob_name):
   storage_client = storage.Client.from_service_account_json(CREDENTIALS_FILE)
