@@ -22,7 +22,9 @@ DB_HOST = os.getenv("POSTGRES_HOST")
 DB_PORT = 5433
 
 PROJECT_ID = "web-server-420612"
-TOPIC_NAME = "post-task-sub"
+TOPIC_NAME = "post-task"
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
 
 # Función para conectar a la base de datos PostgreSQL
 def connect_db():
@@ -196,12 +198,20 @@ def start(current_user):
     topic_path = publisher.topic_path(PROJECT_ID, TOPIC_NAME)
 
     # Construye el mensaje con el payload y el header de autorización
-    message = {'url': url}
-    message_bytes = json.dumps(message).encode('utf-8')
-    headers = {'Authorization': 'Bearer ' + authorization_header}
+    #message = {'url': url}
+    #message_bytes = json.dumps(message).encode('utf-8')
+    #headers = {'Authorization': 'Bearer ' + authorization_header}
 
     # Publica el mensaje en el tema con el header de autorización
-    future = publisher.publish(topic_path, data=message_bytes, headers=headers)
+    #future = publisher.publish(topic_path, data=message_bytes, headers=headers)
+
+    ############################
+    message = {'url': url, 'Authorization': 'Bearer ' + authorization_header}
+    message_bytes = json.dumps(message).encode('utf-8')
+
+    # Publica el mensaje en el tema
+    future = publisher.publish(topic_path, data=message_bytes)    
+    ############################
 
     # Espera a que el mensaje se publique completamente
     task_id = future.result()
