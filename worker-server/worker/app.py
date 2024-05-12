@@ -5,6 +5,7 @@ import datetime
 import requests
 import base64
 import json
+import os
 from flask import request
 from tasks import app as celery_app, process_video
 from util import fn_info_tasks, fn_info_task, delete_task
@@ -12,6 +13,7 @@ from util import fn_info_tasks, fn_info_task, delete_task
 app = Flask(__name__)
 
 ALLOWED_EXTENSIONS = {'mp4'}
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-sem06-entrega04.json"
 
 # Función de decorador para validar el token JWT
 def token_required(f):
@@ -82,17 +84,19 @@ def get_token_from_body(token):
 def start():
     try:
         # Decodificar el cuerpo del mensaje recibido de Pub/Sub
-        pubsub_message = request.data.decode('utf-8')
+        pubsub_message = json.loads(request.data.decode('utf-8'))
 
         # Parsear el mensaje JSON
-        pubsub_message_json = json.loads(pubsub_message)
-        token = pubsub_message_json.get('Authorization')
+        actual_data = json.loads(pubsub_message['data'])
 
+        token = actual_data.get('Authorization')
+
+        return jsonify({'token': token,'pubsub_message': pubsub_message, 'pubsub_message_json': actual_data}),201
         # Obtener el usuario actual a partir del token
         current_user = get_token_from_body(token)
 
         # Extraer la URL del mensaje
-        url = pubsub_message_json.get('url')
+        url = actual_data.get('url')
 
         if not url:
             return jsonify({'error': 'La URL no puede estar vacía'}), 404
