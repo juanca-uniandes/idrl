@@ -1,5 +1,5 @@
 # Arquitectura
-Se ha desplegado en GCP una de base de datos, 2 balanceadores de carga, el PubSub y el cloud storage. El primer balanceador de carga esta asociado a las replicas de la instancia web-server y el segundo asociado a la maquina virtual worker; ambas configuradas de manera que pueda llevarse a cabo el autoescalamiento.
+Se ha desplegado en GCP una de base de datos, 2 balanceadores de carga, el PubSub y el cloud storage. El primer balanceador de carga esta asociado a las replicas(Hasta 3 replicas de cada uno) de la instancia web-server y el segundo asociado a la maquina virtual worker; ambas configuradas de manera que pueda llevarse a cabo el autoescalamiento.
 
 ![entrega04](https://github.com/juanca-uniandes/idrl/assets/142269475/9d32b25b-dd2e-48f5-95d8-b1963b0a3037)
 
