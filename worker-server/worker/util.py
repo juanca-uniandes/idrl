@@ -10,6 +10,8 @@ DB_PASSWORD = "idrl_2024"
 DB_HOST = "161.132.40.204"
 DB_PORT = 5433
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
+
 def upload_to_gcs(source_file_path, destination_blob_name):
   storage_client = storage.Client.from_service_account_json(CREDENTIALS_FILE)
   bucket = storage_client.bucket(BUCKET_NAME)

@@ -13,7 +13,7 @@ from util import fn_info_tasks, fn_info_task, delete_task
 app = Flask(__name__)
 
 ALLOWED_EXTENSIONS = {'mp4'}
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-sem06-entrega04.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
 
 # Función de decorador para validar el token JWT
 def token_required(f):

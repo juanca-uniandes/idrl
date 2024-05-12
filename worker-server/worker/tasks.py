@@ -13,6 +13,7 @@ from util import upload_to_gcs, delete_from_gcs
 broker_url = 'redis://redis:6379/0'
 app = Celery('tasks', backend='rpc://', broker=broker_url)
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
 # Obtener las variables de entorno
 DB_NAME = "idrl_db"
 DB_USER = "idrl_user"
