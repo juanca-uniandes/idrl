@@ -7,4 +7,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
+
+RUN mkdir -p /app/videos/processed
+RUN mkdir -p /app/videos/uploads
+
 CMD ["python", "app.py"]
