@@ -206,7 +206,7 @@ def start(current_user):
     #future = publisher.publish(topic_path, data=message_bytes, headers=headers)
 
     ############################
-    message = {'url': url, 'Authorization': 'Bearer ' + authorization_header}
+    message = {'url': url, 'Authorization': authorization_header}
     message_bytes = json.dumps(message).encode('utf-8')
 
     # Publica el mensaje en el tema
