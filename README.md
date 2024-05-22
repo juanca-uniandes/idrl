@@ -94,194 +94,19 @@ Es necesario utilizar una cuenta de servicio con los permisos necesarios para ac
 Crear una instancia de base de datos en PostgreSQL
 
 -------------------------------------------------------------------------------
-## 5. Balanceador de carga para el Worker-server
+## 5. Cloud Run
 -------------------------------------------------------------------------------
-#### a. Computer engine -> Crear una VM
-Configura una instancia virtual para alojar tu aplicación.
+#### a. Crear en Cloud Run, un servicio para el web server
+1. Modificar el codigo previo ubicado en la carpeta "web-server"
+2. Crear el servicio ubicandose en la carpeta correspondiente y ejecutando el siguiente comando:
 
-1. Accede al menú "Compute Engine" y selecciona "VM Instances".
-2. Crea una nueva instancia con los siguientes detalles:
-   - Nombre: worker-server
-   - Región: us-central1
-   - Zona: us-central1-a
-   - Tipo de máquina: EC - e2-small (2 vCPU, 2 GB de RAM y 20 GB de almacenamiento)
-   - Disco de arranque: Imágenes públicas -> Sistema operativo: Ubuntu 20.04 LTS, Seleccionar la regla de conservar el disco de arranque.
-   - Configura las reglas de firewall para permitir el tráfico HTTP, HTTPS y comprobaciones de estado del balanceador de carga.
-   - Etiqueta de red: http-server
-   - Interfaces de red - Dirección IPv4 interna principal - Efimera(Personalizada): 10.128.0.3
-
-#### b. Computer engine -> SSH a la VM worker-server
-Accede a la instancia de VM recién creada para instalar Docker y configurar tu aplicación.
-
-1. Accede a la VM utilizando SSH.
-2. Clona el repositorio (https://github.com/juanca-uniandes/idrl)
-3. Ejecuta los comandos para "levantar" los contenedores de la carpeta "worker-server" de modo que se ejecuten al iniciar el sistema operativo
-
-#### c. Crea la imagen
-Utilizando el disco de la mquina virtual del paso anetrior, se crea una imagen
-
-#### d. Crea el instance template
-Utilizando la imagen del paso anetrior, crear un instance template utilizando la cuenta asociada en el paso 4
-
-#### e. Crea el group instance
-Utilizando el template anterior, crear un group instance configurado de tal manera que tenga habilitado el autoescalamiento con 3 instancias como maximo y que tenga como "signal" asociado el "PubSub" para que cada instancia pueda atender 5 mensajes como maximo
-
-#### f. Crea el load balancing
-Utilizando el componente anterior crear el load balancing de modo que el backend de este tenga habilitado el protocolo HTTPS, para ello adquirir un dominio y seleccionar la opcion en la cual GCP crea un certificado. Se realiza esta configuracion puesto que nuestra arquitectura es de tipo "PUSH" y requiere que los mensajes se envien por https.
-
--------------------------------------------------------------------------------
-## 7. Balanceador de carga para el Web-server
--------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-### 7.1. Computer engine -> Crear una VM
--------------------------------------------------------------------------------
-Configura una instancia virtual para alojar tu aplicación.
-
-1. Accede al menú "Compute Engine" y selecciona "VM Instances".
-2. Crea una nueva instancia con los siguientes detalles:
-   - Nombre: web-server
-   - Región: us-central1
-   - Zona: us-central1-a
-   - Tipo de máquina: EC - e2-small (2 vCPU, 2 GB de RAM y 20 GB de almacenamiento)
-   - Disco de arranque: Imágenes públicas -> Sistema operativo: Ubuntu 20.04 LTS, Seleccionar la regla de conservar el disco de arranque.
-   - Configura las reglas de firewall para permitir el tráfico HTTP, HTTPS y comprobaciones de estado del balanceador de carga.
-   - Etiqueta de red: http-server
-
--------------------------------------------------------------------------------
-### 7.2. Computer engine -> SSH a la VM web-server
--------------------------------------------------------------------------------
-Accede a la instancia de VM recién creada para instalar Docker y configurar tu aplicación.
-
-1. Accede a la VM utilizando SSH.
-2. Ejecuta los siguientes comandos para instalar Docker, clonar tu repositorio y levantar tu aplicación.
-
-```bash
-sudo apt-get update -y &&\
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common &&\
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&\
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" &&\
-sudo apt-get update -y &&\
-sudo apt-get install docker-ce docker-ce-cli containerd.io -y &&\
-sudo usermod -aG docker $USER &&\
-git clone https://github.com/juanca-uniandes/idrl.git &&\
-cd idrl/web-server &&\
-sudo docker compose up -d &&\
-sudo docker ps -a  &&\
-sudo systemctl enable docker.service &&\
-sudo docker update --restart=always web-server-app-1 &&\
-sudo docker update --restart=always web-server-nginx-1 &&\
-```
-
-
-
-** Se debe tener encuenta que la IP interna del worker-server sea la del ip Load Balancing, en caso de no tener esta ip, se deben ejecutar estos comandos después de haber clonado el repositorio.
-
-```bash
-cd idrl/web-server/app &&\
-nano app.py
-```
-Una vez abra el app.py se debe modificar esta linea de código con la IP interna perteneciente al worker-server.
-```nano de app.py
-# URL del servidor que realiza las tareas
-TASKS_URL = 'http://IP_LOAD_BALANCING_WORKER_SERVER:5004/tasks'
-```
-una ves hecho se guarda el archivo y se deben seguir ejecutando los comandos siguientes a clonar el repositorio.
-
--------------------------------------------------------------------------------
-### 7.3. Computer engine -> Seleccionar web-server
--------------------------------------------------------------------------------
-Después de configurar la VM y tu aplicación, verifica su funcionamiento y realiza las configuraciones adicionales necesarias.
-
-1. Accede a la VM web-server `http://34.122.54.87:5000`. Te dará una respuesta: BASE OK OK OK!
-2. Verifica que la aplicación esté funcionando correctamente.
-3. Configura las opciones de eliminación de la instancia, como mantener el disco de arranque al eliminar la instancia y elimina la instancia.
-4. Verificar que el disco aun exista en la sección "Disk"
+#### b. Crear en Cloud Run, un servicio para el worker
+1. Modificar el codigo previo ubicado en la carpeta "worker-server"
+2. Crear el servicio ubicandose en la carpeta correspondiente y ejecutando el siguiente comando:
 
 
 -------------------------------------------------------------------------------
-### 7.4. Computer engine -> Seleccionar imágenes
--------------------------------------------------------------------------------
-Antes de crear plantillas de instancia, asegúrate de tener una imagen personalizada creada.
-
-1. Accede al menú "Compute Engine" y selecciona "Images".
-2. Crea una nueva imagen con el disco de la instancia web-server con la siguiente configuración.
-
-   - name: mywebserver
-   - source: disk
-   - source disk: web-server
-
--------------------------------------------------------------------------------
-### 7.5. Computer engine -> Plantillas de instancia
--------------------------------------------------------------------------------
-Utiliza plantillas de instancia para simplificar la creación de instancias futuras.
-
-1. Accede al menú "Compute Engine" y selecciona "Instance Templates".
-2. Crea una nueva plantilla con los detalles de la imagen personalizada y las reglas de firewall necesarias con la siguiente configuración.
-   - name: mywebserver-template
-   - machine type: E2-Small
-   - boot disk -> change -> custom images -> image: mywebserver
-   - Firewall: Allow HTTP Traffic
-   - Firewall: Allow HTTPS Traffic
-   - Firewall: Allow Load Balancer Health Checks
-   - Advanced options -> Networking -> server tags: http-server
-
--------------------------------------------------------------------------------
-### 7.6. Computer engine -> Grupos de instancias
--------------------------------------------------------------------------------
-Crea grupos de instancias para facilitar la gestión y el escalado automático de tus aplicaciones.
-
-1. Accede al menú "Compute Engine" y selecciona "Instance Groups".
-2. Crea un nuevo grupo de instancias con la plantilla previamente creada y configura el autoescalado y la auto-curación según sea necesario, con la siguiente configuración.
-
-   - name: us-central1-mig
-   - Instance template: mywebserver-template
-   - Location: varias zonas
-   - Region: us-central1
-   - Zones: us-central1-c y us-central1-a
-   - Autoscaling: On
-   - Minimum number of instance: 1
-   - Maximum number of instance: 3
-   - Edit-signal->signal type: HTTP Load balancing utilization
-   - Edit-signal->target HTTP load balancing utilization: 75
-   - Autohealing-> create health check->name: http-health-check
-   - Autohealing-> create health check->scope: global
-   - Autohealing-> create health check->scope->protocol: TCP
-   - Autohealing-> create health check->scope->port: 5000
-   - Initial Delay: 60
-
-Create:
-   - Autoscaling configuration is not complete: COMFIRM
-
-** Al terminar esto se debe generar una instancia con la imagen templete creada, en la cual puedes validar el estado de la aplicación con la IP externa.
-
--------------------------------------------------------------------------------
-### 7.7. Network services -> Balanceo de carga
--------------------------------------------------------------------------------
-Configura un balanceador de carga para distribuir el tráfico entre tus instancias.
-
-1. Accede al menú "Network services" y selecciona "Load Balancing".
-2. Crea un nuevo balanceador de carga de aplicación con los detalles adecuados, incluida la configuración del backend y la comprobación de estado, con la siguiente configuración.
-
-   - Application Load Balancer (HTTP/HTTPS)
-   - Public facing (external)
-   - Best for global workloads
-   - Global external Application Load Balancer
-   - name: http-lb
-   - backend->create backend service->name: http-backend
-   - backend->create backend service->backend type: Instance group
-   - backend->create backend service->instance group: us-central1-mig
-   - backend->create backend service->port numbers: 5000
-   - backend->create backend service->balancing mode: rate
-   - backend->create backend service->balancing mode->rate: Maximum RPS (50)
-   - backend->create backend service->balancing mode->rate: capacidad 80 
-   - backend->Health check: http-health-check
-   - backend->cloud armor policies:default-security-policy-for-backend-service-http-backend
-
-Create
-
--------------------------------------------------------------------------------
-### 8. Cloud Storage - Create a Bucket
+### 6. Cloud Storage - Create a Bucket
 -------------------------------------------------------------------------------
 #### a. Creacion
 1. Accede al menú "Cloud Storage" y selecciona "bucket".
@@ -305,7 +130,7 @@ Create
 6. Haz clic en el botón "Guardar".
 
 -------------------------------------------------------------------------------
-### 9. Pub Sub - Topic, Subscription
+### 7. Pub Sub - Topic, Subscription
 -------------------------------------------------------------------------------
 Crear el "topic" y "subscription" de acuerdo a las siguientes características:
 
