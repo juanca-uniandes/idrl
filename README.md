@@ -1,41 +1,27 @@
 # Arquitectura
-Se ha desplegado en GCP una de base de datos, 2 balanceadores de carga, el PubSub y el cloud storage. El primer balanceador de carga esta asociado a las replicas(Hasta 3 replicas de cada uno) de la instancia web-server y el segundo asociado a la maquina virtual worker; ambas configuradas de manera que pueda llevarse a cabo el autoescalamiento.
+Se ha desplegado en GCP una de base de datos, 2 servicios en Cloud Run, el PubSub y cloud storage. El primer servicio en Cloud Run esta construido a partir de una imagen de nuestro web server y el segundo servicio asociado a la imagen del worker.
 
-![entrega04](https://github.com/juanca-uniandes/idrl/assets/142269475/9d32b25b-dd2e-48f5-95d8-b1963b0a3037)
-
+![arquitectura-entrega-5](https://github.com/juanca-uniandes/idrl/assets/142269475/8c5c746c-6865-4d93-ad14-e544d1cf27da)
 
 La distribucion de los componentes se detalla a continuacion:
-- **Load Balancing:**
-    - Configuracion de distribucion de carga para las instancias del web-server configurados en el autoscaling.
-    - El criterio de escalmianto es de 50 solicitudes por instancia.
-    - Configuracion de distribucion de cargas para las instancias del worker configurados en el autoscaling.
-    - El criterio de escalmianto es de 5 mensajes por instancia..
-- **Autoscaling:**
-    - Crea multiples instancias del web-server con base en Métricas de ajuste de escala automático: Uso del balanceo de cargas de HTTP: 75%.
-    - Crea entre minimo 1 instancia y 3 instancias.
-    - Crea multiples instancias del workerserver con base en Métricas de ajuste de escala automático: Uso de CPU al 75%.
-    - Crea entre minimo 1 instancia y 3 instancias.
-- **Web-Server:**
-    - Contenedor Nginx: Configurado como un proxy, para atender las peticiones del usuario,
-    - Autorization: Su labor principal es autenticar al usuario con el proposito de proteger a los endpoins que deban estar autorizados.
-- **Worker-Server:**
-    - Worker: Lleva a cabo la tarea mas "pesada" del sistema, el procesamiento de videos
-    - Tasks: Se ocupa de tareas mas livianas, llevadas a cabo de manera sincrona, por ejemplo consultar el estado de una tarea.
-    - Redis: Cola de mensajes para llevar a cado las tareas asincronas.
-- **Cloud Storage::**
-Se encarga de almacenar los videos descargados y procesados
+- **Cloud Environment Web-Server:**
+Esta construido a partir del contenedor "Web Server", incluye las funciones de autenticacion y los demas endpoints "sincronos" necesarios para implementar la solucion.
+- **Cloud Environment Worker-Server:**
+Esta construido a partir del contenedor "Worker", lleva a cabo la tarea mas "pesada" del sistema, el procesamiento de videos
 - **Cloud SQL:**
 Instancia de base de datos en Postgres
-- **Monitoring:**
-Atravez de politas monitorea los servicios del autoscaling, grupo de instancias segun varios parametros y de forma grafica.
+- **Cloud Storage::**
+Se encarga de almacenar los videos descargados y procesados
 - **PubSub:**
-Utilizado para realizar la comunicacion asincrona entre el balanceador web y el balanceador del worker, de esta manera las instancias dentro de estos pueden escalar automaticamente de acuerdo a la carga de trabajo
+Utilizado para realizar la comunicacion asincrona entre los servicios "Web Server" y "Worker" implementados en Cloud Run, de esta manera las ambos servicios pueden escalar automaticamente de acuerdo a la carga de trabajo.
+- **Monitoring:**
+A travez de politicas monitorea los servicios implementados segun los parametros establecidos y de forma grafica.
 
 # Tecnologías asociadas
 - Docker
 - Flask
-- Redis
-- Celery
+- Cloud PudSub
+- Cloud Run
 - PostgreSQL
 - JMeter
 
@@ -46,9 +32,9 @@ Utilizado para realizar la comunicacion asincrona entre el balanceador web y el 
 -------------------------------------------------------------------------------
 Antes de comenzar con la configuración, asegúrate de tener un nuevo proyecto creado en Google Cloud Platform (GCP).
 
-1. Accede al menú de "Compute Engine" en GCP.
-2. Habilita la API de "Compute Engine".
-
+1. Habilita la API de "Compute Engine".
+2. Habilitar el API de "Cloud Run".
+3. Habilitar el API de "Pub Sub".
 -------------------------------------------------------------------------------
 ## 2. VPC network -> Crear una regla de firewall
 -------------------------------------------------------------------------------
@@ -106,7 +92,6 @@ Es necesario utilizar una cuenta de servicio con los permisos necesarios para ac
 ## 4. SQL -> Cloud Sql
 -------------------------------------------------------------------------------
 Crear una instancia de base de datos en PostgreSQL
-
 
 -------------------------------------------------------------------------------
 ## 5. Balanceador de carga para el Worker-server
