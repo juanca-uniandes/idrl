@@ -1,3 +1,4 @@
+from flask.json import jsonify
 import psycopg2
 import os
 from google.cloud import storage
@@ -198,5 +199,5 @@ def delete_task(id_task):
     path_split_videos = fn_path_split_video(id_task)
     for file in path_split_videos:
         delete_from_gcs(file[0])
-    
-    return sp_abort_task(id_task)
+    sp_abort_task(id_task)
+    return jsonify({'result': 'Tarea cancelada correctamente'}), 200

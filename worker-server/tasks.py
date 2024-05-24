@@ -1,19 +1,11 @@
-# tasks.py
-from celery import Celery
-import time
+import random
 import psycopg2
 from datetime import datetime
 import os
 from moviepy.editor import VideoFileClip, concatenate_videoclips, ImageClip
 import requests
-import base64
-from flask import Flask, request, jsonify
-from util import upload_to_gcs, delete_from_gcs
+from util import upload_to_gcs
 
-broker_url = 'redis://redis:6379/0'
-app = Celery('tasks', backend='rpc://', broker=broker_url)
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
 # Obtener las variables de entorno
 DB_NAME = "idrl_db"
 DB_USER = "idrl_user"
@@ -26,6 +18,7 @@ UPLOAD_FOLDER_TO_PROCESSED_VIDEOS = 'videos/processed'
 ALLOWED_EXTENSIONS = {'mp4'}
 LOGO_PATH = 'logo.png'
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
 
 def shorten_video_duration(video_clip, start, end):
     return video_clip.subclip(start, end)
@@ -105,12 +98,11 @@ def process_saved_video(task_id, file_path):
 
             # subir al bucket
             upload_to_gcs(processed_video_path, UPLOAD_FOLDER_TO_PROCESSED_VIDEOS + '/' + clip_filename)
-    insertQuery = """
-        INSERT INTO processing_videos(id_task, id_video, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)
-    """
-    runQuery(insertQuery, (task_id, video_info['id'], 'Procesado', datetime.now(), datetime.now()))
+    updateQuery = """UPDATE processing_videos SET status = %s, updated_at = %s WHERE id_task = %s"""
+    runQuery(updateQuery, ('Procesado', datetime.now(), task_id))
     os.remove(original_video.filename)
     return True
+
 
 
 def insert_video(task_id, url, current_user):
@@ -196,15 +188,17 @@ def download_video_from_url(url, destination_path):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.task(bind=True)
-def process_video(self, url, current_user):
-    task_id = self.request.id
+# @app.task(bind=True)
+def process_video(task_id, url, current_user):
+    #task_id = self.request.id
+    #task_id = random.randint(1, 1000000)
 
     if not allowed_file(url):
         error_message = f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"
         return {'error': error_message}
 
     file_path = insert_video(task_id, url, current_user)
-    process_saved_video(task_id, file_path)
-    # escribir_archivo()
-    return {'status': 'MODIFICADO', 'result': 100}
+    result = process_saved_video(task_id, file_path)
+    
+    return {'status': 'PROCESADO', 'result': result}
+    #return {'status': 'PROCESADO', 'result': task_id}

@@ -16,6 +16,8 @@ Se encarga de almacenar los videos descargados y procesados
 Utilizado para realizar la comunicacion asincrona entre los servicios "Web Server" y "Worker" implementados en Cloud Run, de esta manera las ambos servicios pueden escalar automaticamente de acuerdo a la carga de trabajo.
 - **Monitoring:**
 A travez de politicas monitorea los servicios implementados segun los parametros establecidos y de forma grafica.
+- **Cloud Run:**
+Despliega instancias para la ejecucion de procesos cortos, posee un balanceo de cargas y un escalador automatico. En Cloud Run se despliega el Web-Server y el Worker-Server.
 
 # Tecnologías asociadas
 - Docker
@@ -96,14 +98,41 @@ Crear una instancia de base de datos en PostgreSQL
 -------------------------------------------------------------------------------
 ## 5. Cloud Run
 -------------------------------------------------------------------------------
+
+* Se debe colocar las credenciales en los archivos credentials-cuenta-storage.json del web-servee y el worker-server y se carga con la informacion del archivo [Credenciañes-web-worker](Credenciales-Web-Worker.pdf)
+
 #### a. Crear en Cloud Run, un servicio para el web server
 1. Modificar el codigo previo ubicado en la carpeta "web-server"
-2. Crear el servicio ubicandose en la carpeta correspondiente y ejecutando el siguiente comando:
+2. Crear el servicio ubicandose en la carpeta `web-server` y ejecutando el siguiente comando:
+ 
+```bash
+ gcloud builds submit --tag gcr.io/web-server-420612/web-server
+```
+```bash
+ gcloud run deploy web-server `
+  --image gcr.io/web-server-420612/web-server `
+  --platform managed `
+  --region us-west1 `
+  --allow-unauthenticated `
+  --set-env-vars GOOGLE_CLOUD_PROJECT=web-server-420612 `
+  --set-env-vars PUBSUB_TOPIC=post-task `
+  --set-env-vars TASKS_URL=https://worker-server-65qdrdv3sq-uw.a.run.app
+```
 
 #### b. Crear en Cloud Run, un servicio para el worker
 1. Modificar el codigo previo ubicado en la carpeta "worker-server"
-2. Crear el servicio ubicandose en la carpeta correspondiente y ejecutando el siguiente comando:
+2. Crear el servicio ubicandose en la carpeta `worker-server` y ejecutando el siguiente comando:
 
+```bash
+gcloud builds submit --tag gcr.io/web-server-420612/worker-server
+```
+```bash
+gcloud run deploy worker-server `
+ --image gcr.io/web-server-420612/worker-server `
+ --platform managed `
+ --region us-west1 `
+ --allow-unauthenticated
+```
 
 -------------------------------------------------------------------------------
 ### 6. Cloud Storage - Create a Bucket
@@ -135,7 +164,7 @@ Crear una instancia de base de datos en PostgreSQL
 Crear el "topic" y "subscription" de acuerdo a las siguientes características:
 
 - Delivery type de tipo "Push"
-- El endpoint asociado al punto anterior debe ser la URL del balanceador de carga del worker server
+- El endpoint asociado al punto anterior debe ser la URL del Cloud Run del worker-server
 - Esta url debe soportar obligatoriamente el protocolo https
 
 ## Proceso de eliminación.
@@ -197,7 +226,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
   - Todos los endpoints que se detallan a continuación requieren el encabezado `Content-Type: application/json`:
 
     1. **Registro de usuario:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/auth/signup` con un cuerpo que contenga los siguientes campos:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>/auth/signup` con un cuerpo que contenga los siguientes campos:
       ```json
       {
           "username": "admin",
@@ -223,9 +252,9 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       ```
 
     3. **Cargar video para procesamiento:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
       ```bash
-      curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks' \
+      curl --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks' \
       --header 'Content-Type: application/json' \
       --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw' \
       --data  '{
@@ -239,31 +268,31 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       }
       ```
       4. **Consultar estado de todas las tareas**
-      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_WEB_SERVER>/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - El parametro "max" indica el numero maximo de registros
       - El parametro "order" especifica el orden en que se muestran los datos, 0 si es ascendete y 1 si es descendente
       - Ejemplo:
     ```
-    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1' \
+    curl --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks?max=4&order=1' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
     5. **Consultar estado de una tarea**
-      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_WEB_SERVER>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea 
       - Ejemplo:
     ```
-    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
   
     6. **Abortar una tarea:**
-      - Realiza una solicitud DELETE a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud DELETE a http://<IP_PUBLICA_WEB_SERVER>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea, que se puede obtener de la consulta especificada en el paso (4)
       - Ejemplo:
     ```
-    curl -X DELETE --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl -X DELETE --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
@@ -306,7 +335,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
   - Todos los endpoints que se detallan a continuación requieren el encabezado `Content-Type: application/json`:
 
     1. **Registro de usuario:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/auth/signup` con un cuerpo que contenga los siguientes campos:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>/auth/signup` con un cuerpo que contenga los siguientes campos:
       ```json
       {
           "username": "admin",
@@ -317,7 +346,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       ```
 
     2. **Obtener token de acceso:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/auth/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>/auth/login` con un cuerpo que contenga el email y la contraseña del usuario. Ejemplo:
       ```json
       {
           "email": "admin@gmail.com",
@@ -332,9 +361,9 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       ```
 
     3. **Cargar video para procesamiento:**
-      - Realiza una solicitud POST a `http://<IP_PUBLICA_LOAD_BALANCING>/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
+      - Realiza una solicitud POST a `http://<IP_PUBLICA_WEB_SERVER>/tasks` con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso anterior. En el cuerpo de la solicitud, proporciona la URL del video que se va a procesar. Por ejemplo:
       ```bash
-      curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks' \
+      curl --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks' \
       --header 'Content-Type: application/json' \
       --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw' \
       --data  '{
@@ -348,31 +377,31 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
       }
       ```
       4. **Consultar estado de todas las tareas**
-      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_WEB_SERVER>/tasks?max=4&order=1 con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - El parametro "max" indica el numero maximo de registros
       - El parametro "order" especifica el orden en que se muestran los datos, 0 si es ascendete y 1 si es descendente
       - Ejemplo:
     ```
-    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks?max=4&order=1' \
+    curl --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks?max=4&order=1' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
     5. **Consultar estado de una tarea**
-      - Realiza una solicitud GET a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud GET a http://<IP_PUBLICA_WEB_SERVER>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea 
       - Ejemplo:
     ```
-    curl --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks/bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```
   
     6. **Abortar una tarea:**
-      - Realiza una solicitud DELETE a http://<IP_PUBLICA_LOAD_BALANCING>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
+      - Realiza una solicitud DELETE a http://<IP_PUBLICA_WEB_SERVER>/tasks/<ID_TASK> con autorización de tipo Bearer, utilizando el token de acceso obtenido en el paso de autenticacion.
       - ID-TASK es el codigo de la tarea, que se puede obtener de la consulta especificada en el paso (4)
       - Ejemplo:
     ```
-    curl -X DELETE --location 'http://<IP_PUBLICA_LOAD_BALANCING>/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
+    curl -X DELETE --location 'http://<IP_PUBLICA_WEB_SERVER>/tasks//bf5ae39c-751a-439f-9a03-88a19e20c360' \
     --header 'Content-Type: application/json' \
     --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTMwMjYzMDV9.Q2W2gXVHS0LcjlATjLg_Aj2VTffZTo-xfRn_op2HKUw'
     ```

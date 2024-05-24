@@ -1,0 +1,13 @@
+Flask
+asyncio
+gunicorn
+Werkzeug
+moviepy
+Pillow==9.5.0
+ffmpeg-python
+ffmpeg
+opencv-python
+opencv-python-headless
+psycopg2-binary
+google-cloud-storage
+google-cloud-logging

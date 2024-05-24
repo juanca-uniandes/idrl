@@ -7,24 +7,26 @@ import datetime
 import random
 import psycopg2
 import requests
-from google.cloud import pubsub_v1
+from google.cloud import pubsub_v1, logging
 import time
 import os
 import re
+from util import fn_info_tasks, fn_info_task, delete_task
 
 app = Flask(__name__)
 
-# Obtener las variables de entorno para la conexión a la base de datos
-DB_NAME = os.getenv("POSTGRES_DB")
-DB_USER = os.getenv("POSTGRES_USER")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = os.getenv("POSTGRES_HOST")
-DB_PORT = 5433
-
-PROJECT_ID = "web-server-420612"
-TOPIC_NAME = "post-task"
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+topic_id = os.getenv('PUBSUB_TOPIC')
+tasks_url = os.getenv('TASKS_URL')
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials-cuenta-storage.json"
+
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(project_id, topic_id)
+
+# Configuración de Google Cloud Logging
+logging_client = logging.Client()
+logger = logging_client.logger("pubsub_logger")
 
 # Función para conectar a la base de datos PostgreSQL
 def connect_db():
@@ -37,7 +39,6 @@ def connect_db():
     )
 
 # URL del servidor que realiza las tareas
-TASKS_URL = 'http://34.102.226.96/tasks'
 
 #EXTENCION de los videos
 ALLOWED_EXTENSIONS = {'mp4'}
@@ -86,6 +87,12 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
 
     return decorated
+
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 # Ruta para el registro de usuarios
 @app.route('/auth/signup', methods=['POST'])
@@ -178,77 +185,94 @@ def allowed_file(filename):
 # Rutas protegidas que requieren un token válido
 @app.route('/tasks', methods=['POST'])
 @token_required
-def start(current_user):
-    
-    authorization_header = request.headers.get('Authorization')
+def publish_message(current_user):
     try:
-        url = request.json['url']
+        # Obtener el cuerpo de la solicitud JSON
+        data = request.get_json()
+        if not data or 'url' not in data:
+            logger.log_text('Bad Request: no URL provided', severity="ERROR")
+            return jsonify({'error': 'Bad Request: no URL provided'}), 400
+
+        # Obtener la URL del cuerpo de la solicitud
+        url = data['url'] 
+
         if not url:
             return jsonify({'error': 'La URL no puede estar vacía'}), 404
-    except KeyError:
-        return jsonify({'error': 'Proporcione una URL'}), 404
-    
-    if not allowed_file(url):
-        return jsonify({'error': f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"}), 404
+        
+        if not allowed_file(url):
+            return jsonify({'error': f"El formato del archivo en la URL no está permitido. Se esperaba una extensión de archivo {ALLOWED_EXTENSIONS}"}), 404
 
-    # Crea un cliente de Pub/Sub
-    publisher = pubsub_v1.PublisherClient()
+        # Crear el objeto JSON a enviar con la URL cargada
+        message_obj = {'url': url}
 
-    # Formatea el nombre completo del tema
-    topic_path = publisher.topic_path(PROJECT_ID, TOPIC_NAME)
+        # Convertir el objeto JSON a string
+        message_str = json.dumps(message_obj)
+        
+        # Log el mensaje antes de publicarlo
+        logger.log_text(f"Publishing message: {message_str}")
+        # Convertir el objeto JSON a una cadena de bytes
+        message_bytes = message_str.encode('utf-8')
 
-    # Construye el mensaje con el payload y el header de autorización
-    #message = {'url': url}
-    #message_bytes = json.dumps(message).encode('utf-8')
-    #headers = {'Authorization': 'Bearer ' + authorization_header}
+        # Publicar el mensaje en Pub/Sub
+        future = publisher.publish(topic_path, message_bytes)
+        future.result()
 
-    # Publica el mensaje en el tema con el header de autorización
-    #future = publisher.publish(topic_path, data=message_bytes, headers=headers)
-
-    ############################
-    message = {'url': url, 'Authorization': authorization_header}
-    message_bytes = json.dumps(message).encode('utf-8')
-
-    # Publica el mensaje en el tema
-    future = publisher.publish(topic_path, data=message_bytes)    
-    ############################
-
-    # Espera a que el mensaje se publique completamente
-    task_id = future.result()
-
-    return jsonify({'task_id': str(task_id), 'user': current_user}), 202
-
+        return jsonify({'message': 'URL published successfully'}), 200
+    except Exception as e:
+        # Log la excepción en caso de error
+        logger.log_text(f"Error publishing URL: {str(e)}", severity="ERROR")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/tasks', methods=['GET'])
 @token_required
 def status_all(current_user):
     max = request.args.get('max', default=None, type=int)
-    order = request.args.get('order', default=None, type=int)
-    
-    response = requests.get(TASKS_URL, headers=request.headers) 
-    if response.status_code != 200:
-        return jsonify({'error': 'Error al obtener la tarea'}), 500
-    return jsonify(response.json())   
+    order = request.args.get('order', default=None, type=int)    
+    results = fn_info_tasks(max, order)
+    if results:
+        data = [{'task_id': row[0], 'status': row[1]} for row in results]
+        return jsonify(data)        
+    else:
+        return jsonify({'error': 'Error al ejecutar el procedimiento almacenado'}), 500
 
 @app.route('/tasks/<task_id>', methods=['GET'])
 @token_required
-def status_id(current_user, task_id): 
-    response = requests.get(TASKS_URL+'/'+task_id, headers=request.headers)
-    if response.status_code != 200:
-        return jsonify({'error': 'Error al obtener la tarea'}), 500
-    
-    return jsonify(response.json()), 200
-
-    # Devolver la tarea obtenida correctamente
-
+def status_id(current_user, task_id):    
+    results = fn_info_task(task_id)
+    if results:
+        data = [{'task_id': row[0], 'status': row[1], 'url': row[2]} for row in results]
+        return jsonify(data)
+    else:
+        return jsonify({'error': 'Error al ejecutar el procedimiento almacenado'}), 500
 
 @app.route('/tasks/<task_id>', methods=['DELETE'])
 @token_required
 def abort(current_user, task_id):
-    response = requests.delete(TASKS_URL+'/'+task_id, headers=request.headers)
-    if response.status_code != 200:
-        return jsonify({'error': 'Error al cancelar la tarea'}), 500
-    return jsonify({'result': 'Tarea cancelada correctamente'}), 200
+    try:
+        # Verificar si la tarea existe antes de intentar eliminarla
+        existing_task = fn_info_task(task_id)
+        if not existing_task:
+            return jsonify({'error': 'La tarea especificada no existe'}), 404
+
+        # Realizar la solicitud DELETE al servidor de tareas
+        response = requests.delete(tasks_url + '/tasks/' + task_id)
+
+        # Manejar la respuesta de la solicitud DELETE
+        if response.status_code == 200:
+            # Si la solicitud DELETE se completó correctamente, eliminar la tarea de la base de datos
+            result = delete_task(task_id)
+            if result:
+                return jsonify({'message': 'Tarea cancelada correctamente'}), 200
+            else:
+                return jsonify({'error': 'Error al eliminar la tarea de la base de datos'}), 500
+        else:
+            # Si la solicitud DELETE falló, devolver un mensaje de error adecuado
+            return jsonify({'error': f'Error al cancelar la tarea: {response.text}'}), response.status_code
+    except Exception as e:
+        # Manejar cualquier excepción inesperada y devolver un mensaje de error
+        return jsonify({'error': f'Error al cancelar la tarea: {str(e)}'}), 500
+
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))

@@ -1,6 +1,0 @@
-Flask
-PyJWT==2.3.0
-psycopg2-binary
-Werkzeug
-requests
-google-cloud-pubsub
