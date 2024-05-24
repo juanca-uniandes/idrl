@@ -186,7 +186,7 @@ Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos 
 
 ### 4. Política de Alerta: Cloud Run Revision - Container Memory Utilization
 - **Nombre:** Cloud run revision - Container Memory Utilization
-- **Título de la Alerta:** Cloud run utilizacion memory sobrepasa el 80% en un periodo de 5 minutos
+- **Título de la Alerta:** Cloud run utilización de la memoria sobrepasa el 80% en un periodo de 5 minutos
 - **Umbral de uso de Memoria:** 80%
 - **Tipo:** Warning
 - **Descripción:**
