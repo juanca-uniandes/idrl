@@ -167,26 +167,6 @@ Crear el "topic" y "subscription" de acuerdo a las siguientes características:
 - El endpoint asociado al punto anterior debe ser la URL del Cloud Run del worker-server
 - Esta url debe soportar obligatoriamente el protocolo https
 
-## Proceso de eliminación.
-
-Para evitar gastos inecesarios se pueden eliminar las instancias de la siguiente manera.
-
--------------------------------------------------------------------------------
-### 1. Eliminar -> Para evitar consumo innecesario
--------------------------------------------------------------------------------
-Cuando hayas terminado de probar y usar tus recursos, asegúrate de eliminarlos para evitar cargos innecesarios en tu cuenta de GCP.
-
-1. Elimina el balanceador de carga, los grupos de instancias y las instancias virtuales.
-   - Network services -> Load Balancing -> http-load -> delete
-   - Network services -> Load Balancing -> http-load -> delete ->http-backend
-   - cloud armor policies -> default-security-policy-for-backend-service-http-backend -> delete
-   - Computer engine -> Instance groups -> us-central1-mig -> delete
-   - Computer engine -> Instance VM  -> us-central1-mig-*  -> delete
-
-
-** Para reinstalar debes volver a realizar el punto 6 del autoscaling y el punto 1 de load balancing. 
-
-
 ## Políticas de Alerta en Google Cloud Monitoring
 
 ### 1. Política de Alerta: Pub/Sub - Publish requests
