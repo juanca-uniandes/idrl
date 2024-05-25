@@ -34,9 +34,8 @@ Despliega instancias para la ejecucion de procesos cortos, posee un balanceo de 
 -------------------------------------------------------------------------------
 Antes de comenzar con la configuración, asegúrate de tener un nuevo proyecto creado en Google Cloud Platform (GCP).
 
-1. Habilita la API de "Compute Engine".
-2. Habilitar el API de "Cloud Run".
-3. Habilitar el API de "Pub Sub".
+1. Habilitar el API de "Cloud Run".
+2. Habilitar el API de "Pub Sub".
 -------------------------------------------------------------------------------
 ## 2. VPC network -> Crear una regla de firewall
 -------------------------------------------------------------------------------
@@ -154,7 +153,7 @@ gcloud run deploy worker-server `
 1. Una vez creado el bucket, selecciona el bucket recién creado.
 2. Ve a la pestaña "Permisos".
 3. Haz clic en el botón "Agregar miembro".
-4. Ingresa el nombre de la cuenta de servicio asociada a tu instancia de Compute Engine.
+4. Ingresa el nombre de la cuenta de servicio asociada a tu instancia de Cloud Run.
 5. Selecciona el rol apropiado para la cuenta de servicio (por ejemplo, "Storage Object Creator" o "Storage Object Admin").
 6. Haz clic en el botón "Guardar".
 
