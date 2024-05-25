@@ -99,7 +99,7 @@ Crear una instancia de base de datos en PostgreSQL
 ## 5. Cloud Run
 -------------------------------------------------------------------------------
 
-* Se debe colocar las credenciales en los archivos credentials-cuenta-storage.json del web-servee y el worker-server y se carga con la informacion del archivo [Credenciañes-web-worker](Credenciales-Web-Worker.pdf)
+* Se debe colocar las credenciales en los archivos credentials-cuenta-storage.json del web-servee y el worker-server y se carga con la informacion del archivo [Credenciales-web-worker](Credenciales-Web-Worker.pdf)
 
 #### a. Crear en Cloud Run, un servicio para el web server
 1. Modificar el codigo previo ubicado en la carpeta "web-server"
